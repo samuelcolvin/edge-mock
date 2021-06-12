@@ -1,0 +1,64 @@
+{
+  "name": "edge-mock",
+  "version": "0.0.9",
+  "description": "types for testing an developer edge applications",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "format": "prettier --write  '*.{json,js,toml}' 'src/**/*.{ts,js}' 'tests/**/*.{ts,tsx}'",
+    "lint": "eslint --max-warnings=0 src && prettier --check '*.{json,js,toml}' 'src/**/*.{ts,js}' 'tests/**/*.{ts,tsx}'",
+    "test": "jest --config jest.config.js --verbose",
+    "all": "yarn lint && yarn test"
+  },
+  "author": "Samuel Colvin",
+  "license": "MIT",
+  "homepage": "https://github.com/samuelcolvin/edge-mock",
+  "private": false,
+  "keywords": [
+    "jsx",
+    "edge",
+    "edgerender",
+    "service-worker",
+    "node",
+    "typescript"
+  ],
+  "eslintConfig": {
+    "root": true,
+    "parserOptions": {
+      "ecmaVersion": 11,
+      "sourceType": "module",
+      "ecmaFeatures": {
+        "jsx": true
+      }
+    },
+    "globals": {
+      "xhr_calls": true
+    },
+    "extends": [
+      "typescript",
+      "prettier"
+    ],
+    "rules": {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/explicit-module-boundary-types": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+      "no-constant-condition": "off"
+    }
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^2.2.2",
+    "@types/jest": "^26.0.23",
+    "@typescript-eslint/eslint-plugin": "^4.16.1",
+    "@typescript-eslint/parser": "^4.16.1",
+    "eslint": "^7.21.0",
+    "eslint-config-prettier": "^8.1.0",
+    "eslint-config-typescript": "^3.0.0",
+    "jest": "^27.0.1",
+    "jest-each": "^27.0.2",
+    "prettier": "^2.3.0",
+    "prettier-plugin-toml": "^0.3.1",
+    "ts-jest": "^27.0.1",
+    "typescript": "^4.3.2"
+  }
+}

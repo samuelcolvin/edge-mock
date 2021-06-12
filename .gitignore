@@ -1,0 +1,8 @@
+/dist/
+/node_modules/
+/worker/
+/.idea/
+/scratch/
+/ts-build/
+/coverage/
+/test-build/
