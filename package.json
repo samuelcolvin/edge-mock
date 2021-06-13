@@ -1,6 +1,6 @@
 {
   "name": "edge-mock",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "types for testing an developer edge applications",
   "main": "index.js",
   "types": "index.d.ts",
@@ -10,6 +10,7 @@
     "*.d.ts",
     "README.md",
     "LICENSE",
+    "models/**/*",
     "src/**/*"
   ],
   "scripts": {
@@ -56,7 +57,9 @@
   },
   "jest": {
     "testRegex": "/tests/.*\\.test\\.ts$",
-    "collectCoverageFrom": ["src/**/*.ts"],
+    "collectCoverageFrom": [
+      "src/**/*.ts"
+    ],
     "preset": "ts-jest"
   },
   "devDependencies": {
