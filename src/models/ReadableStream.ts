@@ -62,6 +62,52 @@ export class EdgeReadableStream<R = string | Uint8Array> implements ReadableStre
       return {done: false, value}
     }
   }
+
+  async _toString(): Promise<string> {
+    const reader = this.getReader()
+    let s = ''
+    while (true) {
+      const {done, value} = await reader.read()
+      if (done) {
+        return s
+      } else {
+        if (typeof value == 'string') {
+          s += value
+        } else {
+          s += decode(value as any)
+        }
+      }
+    }
+  }
+
+  async _toBlobParts(): Promise<BlobPart[]> {
+    const reader = this.getReader()
+    const parts: BlobPart[] = []
+    while (true) {
+      const {done, value} = await reader.read()
+      if (done) {
+        return parts
+      } else {
+        parts.push(value as any)
+      }
+    }
+  }
+
+  _toArrayBuffer(): ArrayBuffer {
+    const chunks: Uint8Array[] = []
+    while (true) {
+      const {done, value} = this._read_sync()
+      if (done) {
+        return catUint8Arrays(chunks).buffer
+      } else {
+        if (typeof value == 'string') {
+          chunks.push(encode(value))
+        } else {
+          chunks.push(value as any)
+        }
+      }
+    }
+  }
 }
 
 type BasicCallback = () => void
@@ -92,51 +138,5 @@ class EdgeReadableStreamDefaultReader<R> implements ReadableStreamDefaultReader 
   releaseLock(): void {
     const stream = this.stream as any
     stream._unlock()
-  }
-}
-
-export async function readableStreamAsString(r: ReadableStream): Promise<string> {
-  const reader = r.getReader()
-  let s = ''
-  while (true) {
-    const {done, value} = await reader.read()
-    if (done) {
-      return s
-    } else {
-      if (typeof value == 'string') {
-        s += value
-      } else {
-        s += decode(value)
-      }
-    }
-  }
-}
-
-export async function readableStreamAsBlobParts(r: ReadableStream): Promise<BlobPart[]> {
-  const reader = r.getReader()
-  const parts: BlobPart[] = []
-  while (true) {
-    const {done, value} = await reader.read()
-    if (done) {
-      return parts
-    } else {
-      parts.push(value)
-    }
-  }
-}
-
-export function readableStreamAsBuffer(r: EdgeReadableStream): ArrayBuffer {
-  const chunks: Uint8Array[] = []
-  while (true) {
-    const {done, value} = r._read_sync()
-    if (done) {
-      return catUint8Arrays(chunks).buffer
-    } else {
-      if (typeof value == 'string') {
-        chunks.push(encode(value))
-      } else {
-        chunks.push(value as Uint8Array)
-      }
-    }
   }
 }

@@ -1,5 +1,4 @@
 import {EdgeKVNamespace, EdgeReadableStream} from '../src'
-import {readableStreamAsString} from '../src/models/ReadableStream'
 
 describe('EdgeKVNamespace', () => {
   test('get-value', async () => {
@@ -31,7 +30,7 @@ describe('EdgeKVNamespace', () => {
     const kv = new EdgeKVNamespace({foo: {value: 'abc'}})
     const v = await kv.get('foo', 'stream')
     expect(v instanceof EdgeReadableStream).toStrictEqual(true)
-    expect(await readableStreamAsString(v)).toEqual('abc')
+    expect(await v._toString()).toEqual('abc')
   })
 
   test('getWithMetadata-with', async () => {

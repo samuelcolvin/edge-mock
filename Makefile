@@ -24,7 +24,7 @@ all: lint testcov
 .PHONY: clean
 clean:
 	rm -rf coverage
-	rm -rf lib
+	rm -r models
 	rm *.js
 	rm *.d.ts
 	rm *.js.map

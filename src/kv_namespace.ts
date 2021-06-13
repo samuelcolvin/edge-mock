@@ -1,7 +1,7 @@
 // https://developers.cloudflare.com/workers/runtime-apis/kv
 // TODO expiration
 import {encode, decode} from './utils'
-import {EdgeReadableStream, readableStreamAsBuffer} from './models/ReadableStream'
+import {EdgeReadableStream} from './models/ReadableStream'
 
 type InputValueValue = string | ArrayBuffer | ReadableStream
 interface InputValue {
@@ -101,7 +101,7 @@ export class EdgeKVNamespace implements KVNamespace {
     if (typeof value == 'string') {
       value = encode(value).buffer
     } else if ('getReader' in value) {
-      value = readableStreamAsBuffer(value as EdgeReadableStream)
+      value = (value as EdgeReadableStream)._toArrayBuffer()
     }
     this.kv.set(key, {value, metadata})
   }
