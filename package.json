@@ -5,16 +5,18 @@
   "main": "index.js",
   "types": "index.d.ts",
   "files": [
-    "lib/**/*",
-    "src/**/*",
+    "*.js",
+    "*.js.map",
+    "*.d.ts",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "src/**/*"
   ],
   "scripts": {
     "prepublish": "tsc",
     "format": "prettier --write '*.{json,js,toml}' 'src/**/*.{ts,js}' 'tests/**/*.{ts,tsx}'",
     "lint": "eslint --max-warnings=0 src && prettier --check '*.{json,js,toml}' 'src/**/*.{ts,js}' 'tests/**/*.{ts,tsx}'",
-    "test": "jest --config jest.config.js --verbose",
+    "test": "jest --verbose",
     "all": "yarn lint && yarn test"
   },
   "author": "Samuel Colvin",
@@ -51,6 +53,11 @@
       "@typescript-eslint/no-unused-vars": "off",
       "no-constant-condition": "off"
     }
+  },
+  "jest": {
+    "testRegex": "/tests/.*\\.test\\.ts$",
+    "collectCoverageFrom": ["src/**/*.ts"],
+    "preset": "ts-jest"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^2.2.2",

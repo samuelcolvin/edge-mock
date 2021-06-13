@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "outDir": "lib",
+    "outDir": ".",
     "module": "commonjs",
     "target": "esnext",
     "lib": ["esnext", "webworker"],
@@ -10,6 +10,7 @@
     "moduleResolution": "node",
     "sourceMap": true,
     "esModuleInterop": true,
+    "declaration": true,
     "types": ["@cloudflare/workers-types", "@types/jest", "node"]
   },
   "include": ["src"],
