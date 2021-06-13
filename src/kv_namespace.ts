@@ -1,10 +1,11 @@
 // https://developers.cloudflare.com/workers/runtime-apis/kv
-// TODO ReadableStream, list, expiration
-import {EdgeReadableStream} from './models'
+// TODO expiration
 import {encode, decode} from './utils'
+import {EdgeReadableStream, readableStreamAsBuffer} from './models/ReadableStream'
 
+type InputValueValue = string | ArrayBuffer | ReadableStream
 interface InputValue {
-  value: string | ArrayBuffer
+  value: InputValueValue
   metadata?: Record<string, string>
   expiration?: number
 }
@@ -28,12 +29,12 @@ interface ListKey {
 
 type ValueTypeNames = 'text' | 'json' | 'arrayBuffer' | 'stream'
 
-export class MockKVNamespace implements KVNamespace {
+export class EdgeKVNamespace implements KVNamespace {
   protected kv: Map<string, InternalValue>
 
   constructor(kv: Record<string, InputValue> = {}) {
     this.kv = new Map()
-    this._reset(kv)
+    this._put_many(kv)
   }
 
   async get(key: string, options?: {type?: ValueTypeNames; cacheTtl?: number} | ValueTypeNames): Promise<any> {
@@ -46,7 +47,6 @@ export class MockKVNamespace implements KVNamespace {
   }
 
   async getWithMetadata(key: string, type?: ValueTypeNames): Promise<OutputValue> {
-    // async getWithMetadata(key: string, type: ValueTypeNames = 'text'): Promise<KvValue> {
     const v = this.kv.get(key)
     if (v == undefined) {
       return {value: null, metadata: null}
@@ -54,7 +54,7 @@ export class MockKVNamespace implements KVNamespace {
     return {value: prepare_value(v.value, type), metadata: v.metadata || {}}
   }
 
-  async put(key: string, value: string | ArrayBuffer, extra: {metadata?: Record<string, string>}): Promise<void> {
+  async put(key: string, value: InputValueValue, extra: {metadata?: Record<string, string>} = {}): Promise<void> {
     this._put(key, value, extra.metadata)
   }
 
@@ -91,16 +91,17 @@ export class MockKVNamespace implements KVNamespace {
     this.kv.clear()
   }
 
-  _reset(kv: Record<string, InputValue>) {
-    this._clear()
+  _put_many(kv: Record<string, InputValue>) {
     for (const [k, v] of Object.entries(kv)) {
       this._put(k, v.value, v.metadata)
     }
   }
 
-  private _put(key: string, value: string | ArrayBuffer, metadata: Record<string, string> | undefined): void {
+  private _put(key: string, value: InputValueValue, metadata: Record<string, string> | undefined): void {
     if (typeof value == 'string') {
       value = encode(value).buffer
+    } else if ('getReader' in value) {
+      value = readableStreamAsBuffer(value as EdgeReadableStream)
     }
     this.kv.set(key, {value, metadata})
   }

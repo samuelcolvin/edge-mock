@@ -1,8 +1,8 @@
 import {EdgeRequest, EdgeBlob, EdgeResponse, EdgeFetchEvent, EdgeHeaders, EdgeReadableStream} from './models'
-export {MockKVNamespace} from './kv_namespace'
-import {stub_edge_fetch} from './fetch'
+export {EdgeKVNamespace} from './kv_namespace'
+import {stub_fetch} from './fetch'
 
-export {EdgeRequest, EdgeBlob, EdgeResponse, EdgeFetchEvent, EdgeHeaders, EdgeReadableStream, stub_edge_fetch}
+export {EdgeRequest, EdgeBlob, EdgeResponse, EdgeFetchEvent, EdgeHeaders, EdgeReadableStream, stub_fetch}
 
 declare const global: any
 
@@ -11,10 +11,9 @@ interface FetchEventListener {
 }
 
 export class EdgeEnv {
-  protected readonly listeners: Set<FetchEventListener>
+  protected listener: FetchEventListener | null = null
 
   constructor() {
-    this.listeners = new Set()
     this.addEventListener = this.addEventListener.bind(this)
   }
 
@@ -22,17 +21,15 @@ export class EdgeEnv {
     if (type != 'fetch') {
       throw new Error(`only "fetch" events are supported, not "${type}"`)
     }
-    this.listeners.add(listener)
+    this.listener = listener
   }
 
   dispatchEvent(event: FetchEvent): void {
-    for (const listener of this.listeners) {
-      listener(event)
+    if (this.listener) {
+      this.listener(event)
+    } else {
+      throw new Error('no event listener added')
     }
-  }
-
-  resetEventListeners(): void {
-    this.listeners.clear()
   }
 }
 
@@ -43,7 +40,7 @@ const mock_types = {
   Headers: EdgeHeaders,
   Blob: EdgeBlob,
   ReadableStream: EdgeReadableStream,
-  fetch: stub_edge_fetch,
+  fetch: stub_fetch,
 }
 
 export function makeEdgeEnv(extra: Record<string, any> = {}): EdgeEnv {

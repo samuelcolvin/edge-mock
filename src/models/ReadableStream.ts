@@ -1,42 +1,12 @@
-import {decode} from '../utils'
-
-type BasicCallback = () => void
-
-class EdgeReadableStreamDefaultReader<R> implements ReadableStreamDefaultReader {
-  protected readonly stream: EdgeReadableStream<R>
-  protected readonly closed_promise: Promise<undefined>
-
-  constructor(stream: EdgeReadableStream<R>) {
-    this.stream = stream
-    this.closed_promise = new Promise(resolve => {
-      ;(stream as any)._add_resolver(() => resolve(undefined))
-    })
-  }
-
-  get closed(): Promise<undefined> {
-    return this.closed_promise
-  }
-
-  async read(): Promise<ReadableStreamDefaultReadValueResult<R>> {
-    return (this.stream as any)._read()
-  }
-
-  async cancel(reason?: any): Promise<void> {
-    return this.stream.cancel(reason)
-  }
-
-  releaseLock(): void {
-    ;(this.stream as any)._unlock()
-  }
-}
+import {catUint8Arrays, decode, encode} from '../utils'
 
 export class EdgeReadableStream<R = string | Uint8Array> implements ReadableStream {
   protected _locked = false
-  _internal_iterator: IterableIterator<R>
+  protected internal_iterator: IterableIterator<R>
   protected readonly on_done_resolvers: Set<BasicCallback>
 
   constructor(chunks: R[]) {
-    this._internal_iterator = chunks[Symbol.iterator]()
+    this.internal_iterator = chunks[Symbol.iterator]()
     this.on_done_resolvers = new Set()
   }
 
@@ -44,8 +14,8 @@ export class EdgeReadableStream<R = string | Uint8Array> implements ReadableStre
     return this._locked
   }
 
-  async cancel(_reason?: any): Promise<void> {
-    this._internal_iterator = [][Symbol.iterator]()
+  cancel(_reason?: any): Promise<void> {
+    this.internal_iterator = [][Symbol.iterator]()
     return new Promise(resolve => {
       this.on_done_resolvers.add(resolve)
     })
@@ -81,16 +51,47 @@ export class EdgeReadableStream<R = string | Uint8Array> implements ReadableStre
     this.on_done_resolvers.add(resolver)
   }
 
-  protected async _read(): Promise<ReadableStreamDefaultReadResult<R>> {
-    const result = this._internal_iterator.next()
-    if (result.done) {
+  _read_sync(): ReadableStreamDefaultReadResult<R> {
+    const {done, value} = this.internal_iterator.next()
+    if (done) {
       for (const resolve of this.on_done_resolvers) {
         resolve()
       }
-      return result
+      return {done: true, value: undefined}
     } else {
-      return {done: false, value: result.value}
+      return {done: false, value}
     }
+  }
+}
+
+type BasicCallback = () => void
+
+class EdgeReadableStreamDefaultReader<R> implements ReadableStreamDefaultReader {
+  protected readonly stream: EdgeReadableStream<R>
+  protected readonly closed_promise: Promise<undefined>
+
+  constructor(stream: EdgeReadableStream<R>) {
+    this.stream = stream
+    this.closed_promise = new Promise(resolve => {
+      ;(stream as any)._add_resolver(() => resolve(undefined))
+    })
+  }
+
+  get closed(): Promise<undefined> {
+    return this.closed_promise
+  }
+
+  async read(): Promise<ReadableStreamDefaultReadResult<R>> {
+    return this.stream._read_sync()
+  }
+
+  cancel(reason?: any): Promise<void> {
+    return this.stream.cancel(reason)
+  }
+
+  releaseLock(): void {
+    const stream = this.stream as any
+    stream._unlock()
   }
 }
 
@@ -120,6 +121,22 @@ export async function readableStreamAsBlobParts(r: ReadableStream): Promise<Blob
       return parts
     } else {
       parts.push(value)
+    }
+  }
+}
+
+export function readableStreamAsBuffer(r: EdgeReadableStream): ArrayBuffer {
+  const chunks: Uint8Array[] = []
+  while (true) {
+    const {done, value} = r._read_sync()
+    if (done) {
+      return catUint8Arrays(chunks).buffer
+    } else {
+      if (typeof value == 'string') {
+        chunks.push(encode(value))
+      } else {
+        chunks.push(value as Uint8Array)
+      }
     }
   }
 }
