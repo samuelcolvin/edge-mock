@@ -15,9 +15,8 @@ describe('makeEdgeEnv', () => {
   test('basic', async () => {
     const env = makeEdgeEnv()
 
-    env.addEventListener('fetch', e => {
-      const event_ = e as FetchEvent
-      event_.respondWith(handleRequest(event_))
+    addEventListener('fetch', e => {
+      e.respondWith(handleRequest(e))
     })
     const request = new Request('/bar/', {method: 'POST', body: 'testing'})
     const event = new FetchEvent('fetch', {request})

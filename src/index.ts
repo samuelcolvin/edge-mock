@@ -1,36 +1,46 @@
-import {
-  EdgeRequest,
-  EdgeBlob,
-  EdgeResponse,
-  EdgeFetchEvent,
-  EdgeHeaders,
-  EdgeEventTarget,
-  EdgeReadableStream,
-} from './models'
+import {EdgeRequest, EdgeBlob, EdgeResponse, EdgeFetchEvent, EdgeHeaders, EdgeReadableStream} from './models'
 export {MockKVNamespace} from './kv_namespace'
 import {stub_edge_fetch} from './fetch'
 
-export {
-  EdgeRequest,
-  EdgeBlob,
-  EdgeResponse,
-  EdgeFetchEvent,
-  EdgeHeaders,
-  EdgeEventTarget,
-  EdgeReadableStream,
-  stub_edge_fetch,
-}
+export {EdgeRequest, EdgeBlob, EdgeResponse, EdgeFetchEvent, EdgeHeaders, EdgeReadableStream, stub_edge_fetch}
 
 declare const global: any
 
-export class EdgeEnv extends EdgeEventTarget {
-  readonly EdgeRequest = EdgeRequest
-  readonly EdgeResponse = EdgeResponse
-  readonly EdgeFetchEvent = EdgeFetchEvent
-  readonly EdgeHeaders = EdgeHeaders
-  readonly EdgeBlob = EdgeBlob
-  readonly EdgeReadableStream = EdgeReadableStream
-  readonly stub_edge_fetch = stub_edge_fetch
+interface FetchEventListener {
+  (evt: FetchEvent): void
+}
+
+export class EdgeEnv {
+  protected readonly listeners: Set<FetchEventListener>
+
+  constructor() {
+    this.listeners = new Set()
+    this.addEventListener = this.addEventListener.bind(this)
+  }
+
+  addEventListener(type: 'fetch', listener: FetchEventListener): void {
+    if (type != 'fetch') {
+      throw new Error(`only "fetch" events are supported, not "${type}"`)
+    }
+    this.listeners.add(listener)
+  }
+
+  dispatchEvent(event: FetchEvent): void {
+    for (const listener of this.listeners) {
+      listener(event)
+    }
+  }
+
+  removeEventListener(type: 'fetch', listener: FetchEventListener): void {
+    if (type != 'fetch') {
+      throw new Error(`only "fetch" events are supported, not "${type}"`)
+    }
+    this.listeners.delete(listener)
+  }
+
+  resetEventListeners(): void {
+    this.listeners.clear()
+  }
 }
 
 const mock_types = {
@@ -44,6 +54,7 @@ const mock_types = {
 }
 
 export function makeEdgeEnv(extra: Record<string, any> = {}): EdgeEnv {
-  Object.assign(global, mock_types, extra)
-  return new EdgeEnv()
+  const env = new EdgeEnv()
+  Object.assign(global, mock_types, {addEventListener: env.addEventListener}, extra)
+  return env
 }
