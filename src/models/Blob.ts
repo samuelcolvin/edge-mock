@@ -4,51 +4,46 @@ import {encode, decode, catUint8Arrays} from '../utils'
 import {BlobOptions} from 'buffer'
 
 export class EdgeBlob implements Blob {
-  protected readonly chunks: Uint8Array[]
   readonly type: string
+  protected readonly content: Uint8Array
   protected readonly encoding: string
 
-  constructor(chunks: BlobPart[], options: BlobOptions = {}) {
-    this.chunks = []
+  constructor(parts: BlobPart[], options: BlobOptions = {}) {
     this.type = options.type || ''
     this.encoding = options.encoding || 'utf8' // currently unused
-    for (const chunk of chunks) {
-      if (chunk instanceof ArrayBuffer) {
-        this.chunks.push(new Uint8Array(chunk))
-      } else if (chunk instanceof EdgeBlob) {
-        this.chunks.push((chunk as any)._Uint8Array())
+    const chunks: Uint8Array[] = []
+    for (const part of parts) {
+      if (typeof part == 'string') {
+        chunks.push(encode(part))
+      } else if (part instanceof ArrayBuffer) {
+        chunks.push(new Uint8Array(part))
+      } else if ('buffer' in part) {
+        chunks.push(new Uint8Array(part.buffer))
       } else {
-        this.chunks.push(encode(chunk as string))
+        chunks.push((part as any).content)
       }
     }
-  }
-
-  protected _text(): string {
-    return this.chunks.map(decode).join('')
-  }
-
-  protected _Uint8Array(): Uint8Array {
-    return catUint8Arrays(this.chunks)
+    this.content = catUint8Arrays(chunks)
   }
 
   get size(): number {
-    return this._Uint8Array().length
+    return this.content.length
   }
 
   async text(): Promise<string> {
-    return this._text()
+    return decode(this.content)
   }
 
   async arrayBuffer(): Promise<ArrayBuffer> {
-    return this._Uint8Array().buffer
+    return this.content.buffer
   }
 
   stream(): ReadableStream {
-    return new EdgeReadableStream(this.chunks)
+    return new EdgeReadableStream([this.content])
   }
 
   slice(start = 0, end: number | undefined = undefined, contentType?: string): Blob {
     const options = contentType ? {type: contentType} : {}
-    return new Blob(this.chunks.slice(start, end), options)
+    return new EdgeBlob([this.content.slice(start, end)], options)
   }
 }
