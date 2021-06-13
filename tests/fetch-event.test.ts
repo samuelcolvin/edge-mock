@@ -11,6 +11,7 @@ describe('EdgeFetchEvent', () => {
     const request = new EdgeRequest('/')
     const event = new EdgeFetchEvent('fetch', {request})
     expect(event._wait_until_promises.length).toStrictEqual(0)
+    expect(event.clientId).toStrictEqual(undefined)
 
     const f = async () => 123
     event.waitUntil(f())

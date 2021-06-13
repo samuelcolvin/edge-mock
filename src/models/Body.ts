@@ -20,6 +20,7 @@ export class EdgeBody implements Body {
   }
 
   get body(): ReadableStream {
+    this.check_used('body')
     return new EdgeReadableStream([this._body_content])
   }
 
