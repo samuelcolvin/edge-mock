@@ -1,12 +1,18 @@
 {
   "name": "edge-mock",
-  "version": "0.0.9",
+  "version": "0.0.1",
   "description": "types for testing an developer edge applications",
   "main": "index.js",
   "types": "index.d.ts",
+  "files": [
+    "lib/**/*",
+    "src/**/*",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "build": "tsc",
-    "format": "prettier --write  '*.{json,js,toml}' 'src/**/*.{ts,js}' 'tests/**/*.{ts,tsx}'",
+    "prepublish": "tsc",
+    "format": "prettier --write '*.{json,js,toml}' 'src/**/*.{ts,js}' 'tests/**/*.{ts,tsx}'",
     "lint": "eslint --max-warnings=0 src && prettier --check '*.{json,js,toml}' 'src/**/*.{ts,js}' 'tests/**/*.{ts,tsx}'",
     "test": "jest --config jest.config.js --verbose",
     "all": "yarn lint && yarn test"
