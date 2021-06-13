@@ -31,13 +31,6 @@ export class EdgeEnv {
     }
   }
 
-  removeEventListener(type: 'fetch', listener: FetchEventListener): void {
-    if (type != 'fetch') {
-      throw new Error(`only "fetch" events are supported, not "${type}"`)
-    }
-    this.listeners.delete(listener)
-  }
-
   resetEventListeners(): void {
     this.listeners.clear()
   }
