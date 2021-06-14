@@ -62,7 +62,8 @@
   "jest": {
     "testRegex": "/tests/.*\\.test\\.ts$",
     "collectCoverageFrom": [
-      "src/**/*.ts"
+      "src/**/*.ts",
+      "!src/server.ts"
     ],
     "preset": "ts-jest"
   },

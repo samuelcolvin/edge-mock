@@ -152,5 +152,7 @@ describe('EdgeKVNamespace', () => {
     const content_ab = await kv.get('workflows/ci.yml', 'arrayBuffer')
     expect(content_ab).toBeInstanceOf(ArrayBuffer)
     expect(new Uint8Array(content_ab)[0]).toEqual(110)
+
+    expect(kv._manifest_json()).toEqual('{"workflows/ci.yml":"workflows/ci.yml"}')
   })
 })
