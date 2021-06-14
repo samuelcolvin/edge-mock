@@ -21,9 +21,13 @@ export class EdgeBody implements Body {
     this._bodyUsed = false
   }
 
-  get body(): ReadableStream {
-    this.check_used('body')
-    return new EdgeReadableStream([this._body_content])
+  get body(): ReadableStream | null {
+    if (!this._body_content) {
+      return null
+    } else {
+      this.check_used('body')
+      return new EdgeReadableStream([this._body_content])
+    }
   }
 
   get bodyUsed(): boolean {

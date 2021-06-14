@@ -63,7 +63,8 @@
     "testRegex": "/tests/.*\\.test\\.ts$",
     "collectCoverageFrom": [
       "src/**/*.ts",
-      "!src/server.ts"
+      "!src/server.ts",
+      "!src/live_fetch.ts"
     ],
     "preset": "ts-jest"
   },

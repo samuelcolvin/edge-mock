@@ -3,8 +3,8 @@
 import path from 'path'
 import express from 'express'
 import webpack from 'webpack'
-import fetch from 'node-fetch'
 import {makeEdgeEnv, EdgeKVNamespace} from './index'
+import live_fetch from './live_fetch'
 
 const cwd = process.cwd()
 const webpack_config = path.join(cwd, 'webpack.config')
@@ -22,7 +22,7 @@ const kv_namespace = new EdgeKVNamespace()
 const global_extra = {
   __STATIC_CONTENT: kv_namespace,
   __STATIC_CONTENT_MANIFEST: '{}',
-  fetch,
+  fetch: live_fetch,
 }
 const env = makeEdgeEnv(global_extra)
 
@@ -62,7 +62,9 @@ app.all(/.*/, (req, res) => {
     Promise.resolve(promise).then(response => {
       res.status(response.status)
       res.set(Object.fromEntries(response.headers.entries()))
-      response.arrayBuffer().then(ab => res.send(ab))
+      response.arrayBuffer().then(ab => {
+        res.send(new Buffer(ab))
+      })
     })
   }
   listener(event)
