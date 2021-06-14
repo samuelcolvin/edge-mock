@@ -1,5 +1,7 @@
 // https://developers.cloudflare.com/workers/runtime-apis/kv
 // TODO expiration
+import fs from 'fs'
+import path from 'path'
 import {encode, decode} from './utils'
 import {EdgeReadableStream} from './models'
 
@@ -29,6 +31,7 @@ interface ListValue {
 }
 
 type ValueTypeNames = 'text' | 'json' | 'arrayBuffer' | 'stream'
+const default_prepare_key = (file_name: string): string => file_name
 
 export class EdgeKVNamespace implements KVNamespace {
   protected kv: Map<string, InternalValue>
@@ -46,6 +49,7 @@ export class EdgeKVNamespace implements KVNamespace {
     const v = await this.getWithMetadata(key, options.type)
     return v.value || null
   }
+
 
   async getWithMetadata(key: string, type?: ValueTypeNames): Promise<OutputValue> {
     const v = this.kv.get(key)
@@ -94,6 +98,27 @@ export class EdgeKVNamespace implements KVNamespace {
       }
     }
     return {keys, list_complete: true}
+  }
+
+  async _from_files(directory: string, prepare_key?: (file_name: string) => string): Promise<void> {
+    this._clear()
+    prepare_key = prepare_key || default_prepare_key
+
+    const files = await fs.promises.readdir(directory)
+    for( const file of files ) {
+      const file_path = path.join(directory, file )
+      const stat = await fs.promises.stat(file_path)
+
+      if (stat.isFile()) {
+        const content = await fs.promises.readFile(file_path)
+        this._put_many({[prepare_key(file_path)]: content})
+      }
+    }
+  }
+
+  _manifest_json(): string {
+    const manifest = Object.fromEntries([...this.kv.keys()].map(k => ([k, k])))
+    return JSON.stringify(manifest)
   }
 
   _clear() {

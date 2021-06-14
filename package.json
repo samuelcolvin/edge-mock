@@ -1,6 +1,6 @@
 {
   "name": "edge-mock",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "types for testing an developer edge applications",
   "main": "index.js",
   "types": "index.d.ts",
@@ -13,6 +13,9 @@
     "models/**/*",
     "src/**/*"
   ],
+  "bin": {
+    "edge-mock-server": "./server.js"
+  },
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "yarn build",
@@ -63,20 +66,28 @@
     ],
     "preset": "ts-jest"
   },
+  "dependencies": {
+    "express": "^4.17.1",
+    "node-fetch": "^2.6.1"
+  },
+  "peerDependencies": {
+    "webpack": "^4"
+  },
   "devDependencies": {
     "@cloudflare/workers-types": "^2.2.2",
+    "@types/express": "^4.17.12",
     "@types/jest": "^26.0.23",
+    "@types/node-fetch": "^2.5.10",
     "@typescript-eslint/eslint-plugin": "^4.16.1",
     "@typescript-eslint/parser": "^4.16.1",
+    "eslint": "^7.28.0",
     "eslint-config-prettier": "^8.1.0",
     "eslint-config-typescript": "^3.0.0",
     "jest": "^27.0.1",
     "jest-each": "^27.0.2",
     "prettier": "^2.3.0",
     "ts-jest": "^27.0.1",
-    "typescript": "^4.3.2"
-  },
-  "dependencies": {
-    "eslint": "^7.28.0"
+    "typescript": "^4.3.2",
+    "webpack": "^5.38.1"
   }
 }
