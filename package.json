@@ -1,6 +1,6 @@
 {
   "name": "edge-mock",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "types for testing an developer edge applications",
   "main": "index.js",
   "types": "index.d.ts",
@@ -18,6 +18,7 @@
   },
   "scripts": {
     "prepublishOnly": "tsc",
+    "postpublish": "make clean",
     "format": "prettier --write '**/*.{json,js,ts,toml}'",
     "lint": "eslint --max-warnings=0 src tests && prettier --check '**/*.{json,js,ts}'",
     "test": "jest --verbose",
