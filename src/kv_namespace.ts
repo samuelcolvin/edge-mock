@@ -98,17 +98,17 @@ export class EdgeKVNamespace implements KVNamespace {
     return {keys, list_complete: true}
   }
 
-  async _from_files(directory: string, prepare_key?: (file_name: string) => string): Promise<number> {
+  async _add_files(directory: string, prepare_key?: (file_name: string) => string): Promise<number> {
     this._clear()
     if (!prepare_key) {
       const clean_dir = directory.replace(/\/+$/, '')
       const replace_prefix = new RegExp(`^${escape_regex(clean_dir)}\\/`)
       prepare_key = (file_name: string) => file_name.replace(replace_prefix, '')
     }
-    return await this._add_files(directory, prepare_key)
+    return await this._add_directory(directory, prepare_key)
   }
 
-  protected async _add_files(directory: string, prepare_key: (file_name: string) => string): Promise<number> {
+  protected async _add_directory(directory: string, prepare_key: (file_name: string) => string): Promise<number> {
     if (!(await fs.promises.stat(directory)).isDirectory()) {
       throw new Error(`"${directory}" is not a directory`)
     }
@@ -124,7 +124,7 @@ export class EdgeKVNamespace implements KVNamespace {
         this._put_many({[prepare_key(file_path)]: content})
         count += 1
       } else if (stat.isDirectory()) {
-        count += await this._add_files(file_path, prepare_key)
+        count += await this._add_directory(file_path, prepare_key)
       }
     }
     return count

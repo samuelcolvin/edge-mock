@@ -33,7 +33,7 @@ import(webpack_config).then(wp_config => {
     if (!err) {
       delete require.cache[require.resolve(dist_path)]
 
-      kv_namespace._from_files(dist_assets_path, prepare_key).then(() => {
+      kv_namespace._add_files(dist_assets_path, prepare_key).then(() => {
         global.__STATIC_CONTENT_MANIFEST = kv_namespace._manifest_json()
         import(dist_path)
       })

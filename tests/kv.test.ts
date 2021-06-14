@@ -139,9 +139,9 @@ describe('EdgeKVNamespace', () => {
     expect(await kv.get('foo')).toStrictEqual(null)
   })
 
-  test('delete', async () => {
+  test('_add_files', async () => {
     const kv = new EdgeKVNamespace()
-    const count = await kv._from_files('.github/')
+    const count = await kv._add_files('.github/')
     expect(count).toEqual(1)
     expect(await kv.list()).toStrictEqual({
       keys: [{name: 'workflows/ci.yml'}],
