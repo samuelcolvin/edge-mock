@@ -14,7 +14,7 @@ export class EdgeReadableStream<R = string | Uint8Array> implements ReadableStre
     return this._locked
   }
 
-  cancel(_reason?: any): Promise<void> {
+  cancel(_reason?: string): Promise<void> {
     this.internal_iterator = [][Symbol.iterator]()
     return new Promise(resolve => {
       this.on_done_resolvers.add(resolve)
@@ -32,15 +32,15 @@ export class EdgeReadableStream<R = string | Uint8Array> implements ReadableStre
   }
 
   pipeThrough<T>(_transform: ReadableWritablePair<T, R>, _options?: StreamPipeOptions): ReadableStream<T> {
-    throw new Error('pipeThrough not et implemented')
+    throw new Error('pipeThrough not yet implemented')
   }
 
   pipeTo(_dest: WritableStream<R>, _options?: StreamPipeOptions): Promise<void> {
-    throw new Error('pipeTo not et implemented')
+    throw new Error('pipeTo not yet implemented')
   }
 
   tee(): [ReadableStream<R>, ReadableStream<R>] {
-    throw new Error('pipeTo not et implemented')
+    throw new Error('tee not yet implemented')
   }
 
   protected _unlock(): void {

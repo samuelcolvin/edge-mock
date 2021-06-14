@@ -76,9 +76,9 @@ export class EdgeBody implements Body {
       return this._body_content
     } else if (this._body_content instanceof EdgeReadableStream) {
       const parts = await this._body_content._toBlobParts()
-      throw new EdgeBlob(parts)
+      return new EdgeBlob(parts)
     } else {
-      return new Blob([])
+      return new EdgeBlob([])
     }
   }
 

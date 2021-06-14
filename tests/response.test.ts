@@ -34,4 +34,19 @@ describe('EdgeResponse', () => {
     const response = new EdgeResponse(null)
     expect(await response.text()).toEqual('')
   })
+
+  test('stream-string', async () => {
+    const chunks = [new Uint8Array([97, 98]), new Uint8Array([100, 101])]
+    const stream = new EdgeReadableStream(chunks)
+    const response = new EdgeResponse(stream)
+    expect(await response.text()).toEqual('abde')
+  })
+
+  test('stream-array-buffer', async () => {
+    const chunks = [new Uint8Array([97, 98]), new Uint8Array([100, 101])]
+    const stream = new EdgeReadableStream(chunks)
+    const response = new EdgeResponse(stream)
+    const buffer = await response.arrayBuffer()
+    expect(new Uint8Array(buffer)).toEqual(new Uint8Array([97, 98, 100, 101]))
+  })
 })
