@@ -1,6 +1,6 @@
 {
   "name": "edge-mock",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "types for testing an developer edge applications",
   "main": "index.js",
   "types": "index.d.ts",
@@ -71,7 +71,7 @@
     "node-fetch": "^2.6.1"
   },
   "peerDependencies": {
-    "webpack": "^4"
+    "webpack": "4.x.x || 5.x.x"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^2.2.2",
