@@ -17,7 +17,7 @@
     "edge-mock-server": "./server.js"
   },
   "scripts": {
-    "prepublishOnly": "tsc",
+    "prepublishOnly": "tsc -b tsconfig.build.json",
     "postpublish": "make clean",
     "format": "prettier --write '**/*.{json,js,ts,toml}'",
     "lint": "eslint --max-warnings=0 src tests && prettier --check '**/*.{json,js,ts}'",
