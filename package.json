@@ -14,7 +14,8 @@
     "src/**/*"
   ],
   "scripts": {
-    "prepublish": "tsc",
+    "build": "tsc",
+    "prepublishOnly": "yarn build",
     "format": "prettier --write '**/*.{json,js,ts,toml}'",
     "lint": "eslint --max-warnings=0 src tests && prettier --check '**/*.{json,js,ts}'",
     "test": "jest --verbose",

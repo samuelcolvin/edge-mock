@@ -35,5 +35,4 @@ jobs:
         node-version: '14.x'
 
     - run: yarn
-    - run: make clean
     - run: yarn lint
