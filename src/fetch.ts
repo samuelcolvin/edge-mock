@@ -1,7 +1,7 @@
 import {EdgeResponse} from './models'
 import {check_method} from './models/Request'
 
-export async function stub_fetch(resource: string | URL, init: RequestInit): Promise<Response> {
+export async function stub_fetch(resource: string | URL, init: RequestInit | Request): Promise<Response> {
   const method = check_method(init.method)
   let url: URL
   if (resource instanceof URL) {
