@@ -1,6 +1,6 @@
 {
   "name": "edge-mock",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "types for testing an developer edge applications",
   "main": "index.js",
   "types": "index.d.ts",
