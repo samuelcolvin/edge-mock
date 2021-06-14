@@ -1,24 +1,22 @@
-import {EdgeEnv, makeEdgeEnv} from '../src'
+import {makeEdgeEnv} from '../src'
 import {handleRequest} from './example'
 
-let env: EdgeEnv
-
-describe('makeEdgeEnv', () => {
+describe('handleRequest', () => {
   beforeEach(() => {
-    env = makeEdgeEnv()
+    makeEdgeEnv()
     jest.resetModules()
   })
 
-  test('head', async () => {
-    const request = new Request('/?foo=1', {method: 'HEAD'})
+  test('post', async () => {
+    const request = new Request('/?foo=1', {method: 'POST', body: 'hello'})
     const event = new FetchEvent('fetch', {request})
     const response = await handleRequest(event)
     expect(response.status).toEqual(200)
     expect(await response.json()).toStrictEqual({
-      method: 'HEAD',
+      method: 'POST',
       headers: {accept: '*/*'},
       searchParams: {foo: '1'},
-      body: null,
+      body: 'hello',
     })
   })
 })

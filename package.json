@@ -15,8 +15,8 @@
   ],
   "scripts": {
     "prepublish": "tsc",
-    "format": "prettier --write '*.{json,js,toml}' 'src/**/*.{ts,js}' 'tests/**/*.{ts,tsx}'",
-    "lint": "eslint --max-warnings=0 src tests && prettier --check '*.{json,js,toml}' 'src/**/*.{ts,js}' 'tests/**/*.{ts,tsx}'",
+    "format": "prettier --write '**/*.{json,js,ts,toml}'",
+    "lint": "eslint --max-warnings=0 src tests && prettier --check '**/*.{json,js,ts,toml}'",
     "test": "jest --verbose",
     "all": "yarn lint && yarn test"
   },
@@ -67,7 +67,6 @@
     "@types/jest": "^26.0.23",
     "@typescript-eslint/eslint-plugin": "^4.16.1",
     "@typescript-eslint/parser": "^4.16.1",
-    "eslint": "^7.21.0",
     "eslint-config-prettier": "^8.1.0",
     "eslint-config-typescript": "^3.0.0",
     "jest": "^27.0.1",
@@ -76,5 +75,8 @@
     "prettier-plugin-toml": "^0.3.1",
     "ts-jest": "^27.0.1",
     "typescript": "^4.3.2"
+  },
+  "dependencies": {
+    "eslint": "^7.28.0"
   }
 }

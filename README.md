@@ -44,8 +44,61 @@ _edge-mock_ provides the following types (all available for import directly from
   is assigned to `global` as `Request`
 
 A few **Notes**:
+* all the above types are designed to use with node and are vanilla in-memory only
 * `EdgeFormData` to implement [`FormData`](https://developer.mozilla.org/en-US/docs/Web/API/FormData) is not yet built
 
 
 ### Example of Usage with Jest
 
+_edge-mock_ works well with [jest](https://jestjs.io/) to make writing unit tests for edge workers delightful.
+
+Let's say you have the following `handler.ts`:
+
+```ts
+export async function handleRequest(event: FetchEvent): Promise<Response> {
+  const {request} = event
+  const method = request.method
+  const url = new URL(request.url)
+  let body: string | null = null
+  if (method == 'POST') {
+    body = await request.text()
+  }
+  const response_info = {
+    method,
+    headers: Object.fromEntries(request.headers.entries()),
+    searchParams: Object.fromEntries(url.searchParams.entries()),
+    body,
+  }
+  return new Response(JSON.stringify(response_info, null, 2), {headers: {'content-type': 'application/json'}})
+}
+```
+
+(To see how this would be deployed to cloudflare, see the 
+[cloudflare worker TypeScript template](https://github.com/cloudflare/worker-typescript-template))
+
+You test the above `handleRequest`, you code use the following:
+
+```ts
+import {makeEdgeEnv} from 'edge-mock'
+import {handleRequest} from '../src/handle.ts'
+
+describe('handleRequest', () => {
+  beforeEach(() => {
+    makeEdgeEnv()
+    jest.resetModules()
+  })
+
+  test('post', async () => {
+    const request = new Request('/?foo=1', {method: 'POST', body: 'hello'})
+    const event = new FetchEvent('fetch', {request})
+    const response = await handleRequest(event)
+    expect(response.status).toEqual(200)
+    expect(await response.json()).toStrictEqual({
+      method: 'POST',
+      headers: {accept: '*/*'},
+      searchParams: {foo: '1'},
+      body: 'hello',
+    })
+  })
+})
+```
