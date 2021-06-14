@@ -40,7 +40,7 @@ _edge-mock_ provides the following types (all available for import directly from
   [`fetch`](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch) which returns `200`
   for requests to `https://example.com/` and `404` for all other requests
 * `makeEdgeEnv` - which installs all the above types (except `EdgeKVNamespace`) into `global` so they can be
-  used in worker scripts; types are installed into globals by the name of the type they shadow, e.g. `EdgeRequest`
+  used in worker scripts; types are installed into global by the name of the type they shadow, e.g. `EdgeRequest`
   is assigned to `global` as `Request`
 
 A few **Notes**:
@@ -89,6 +89,8 @@ describe('handleRequest', () => {
   })
 
   test('post', async () => {
+    // Request is available here because makeEdgeEnv installed the proxy EdgeRequest into global
+    // under that name, same with FetchEvent etc.
     const request = new Request('/?foo=1', {method: 'POST', body: 'hello'})
     const event = new FetchEvent('fetch', {request})
     const response = await handleRequest(event)

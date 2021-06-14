@@ -86,4 +86,53 @@ describe('EdgeKVNamespace', () => {
     kv._clear()
     expect(await kv.get('foo')).toStrictEqual(null)
   })
+
+  test('list', async () => {
+    const kv = new EdgeKVNamespace({foo: 'foobar', bar: 'spam'})
+    expect(await kv.get('foo')).toEqual('foobar')
+    expect(await kv.get('bar')).toEqual('spam')
+    expect(await kv.list()).toStrictEqual({
+      keys: [{name: 'foo'}, {name: 'bar'}],
+      list_complete: true,
+    })
+  })
+
+  test('list-cursor', async () => {
+    const kv = new EdgeKVNamespace()
+    await expect(kv.list({cursor: 'foobar'})).rejects.toThrow('list cursors not yet implemented')
+  })
+
+  test('list-limit', async () => {
+    const kv = new EdgeKVNamespace({foo: 'foobar', bar: 'spam'})
+    expect(await kv.list({limit: 1})).toStrictEqual({
+      keys: [{name: 'foo'}],
+      list_complete: false,
+      cursor: 'not-fully-implemented',
+    })
+  })
+
+  test('list-metadata', async () => {
+    const kv = new EdgeKVNamespace({foo: 'foobar', bar: {value: 'spam', metadata: {apple: 'banana'}}})
+    expect(await kv.get('foo')).toEqual('foobar')
+    expect(await kv.get('bar')).toEqual('spam')
+    expect(await kv.list()).toStrictEqual({
+      keys: [{name: 'foo'}, {name: 'bar', metadata: {apple: 'banana'}}],
+      list_complete: true,
+    })
+  })
+
+  test('list-prefix', async () => {
+    const kv = new EdgeKVNamespace({foo: 'foobar', bar: 'spam'})
+    expect(await kv.list({prefix: 'f'})).toStrictEqual({
+      keys: [{name: 'foo'}],
+      list_complete: true,
+    })
+  })
+
+  test('delete', async () => {
+    const kv = new EdgeKVNamespace({foo: 'foobar'})
+    expect(await kv.get('foo')).toEqual('foobar')
+    await kv.delete('foo')
+    expect(await kv.get('foo')).toStrictEqual(null)
+  })
 })

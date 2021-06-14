@@ -15,9 +15,11 @@ describe('makeEdgeEnv', () => {
   test('basic', async () => {
     const env = makeEdgeEnv()
 
+    expect(env.listenerAdded).toBeFalsy()
     addEventListener('fetch', e => {
       e.respondWith(handleRequest(e))
     })
+    expect(env.listenerAdded).toBeTruthy()
     const request = new Request('/bar/', {method: 'POST', body: 'testing'})
     const event = new FetchEvent('fetch', {request})
     env.dispatchEvent(event)

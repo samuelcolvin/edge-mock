@@ -1,14 +1,15 @@
 // https://developers.cloudflare.com/workers/runtime-apis/kv
 // TODO expiration
 import {encode, decode} from './utils'
-import {EdgeReadableStream} from './models/ReadableStream'
+import {EdgeReadableStream} from './models'
 
 type InputValueValue = string | ArrayBuffer | ReadableStream
-interface InputValue {
+interface InputObject {
   value: InputValueValue
   metadata?: Record<string, string>
   expiration?: number
 }
+type InputValue = InputValueValue | InputObject
 
 interface InternalValue {
   value: ArrayBuffer
@@ -21,7 +22,7 @@ interface OutputValue {
   metadata: unknown | null
 }
 
-interface ListKey {
+interface ListValue {
   name: string
   expiration?: number
   metadata?: unknown
@@ -63,7 +64,7 @@ export class EdgeKVNamespace implements KVNamespace {
   }
 
   async list(options?: {prefix?: string; limit?: number; cursor?: string}): Promise<{
-    keys: ListKey[]
+    keys: ListValue[]
     list_complete: boolean
     cursor?: string
   }> {
@@ -74,14 +75,22 @@ export class EdgeKVNamespace implements KVNamespace {
 
     const prefix = options.prefix
     const limit = options.limit || 1000
-    const keys: ListKey[] = []
+    const keys: ListValue[] = []
     for (const [name, value] of this.kv) {
       if (!prefix || name.startsWith(prefix)) {
         if (keys.length == limit) {
           return {keys, list_complete: false, cursor: 'not-fully-implemented'}
         }
-        const {expiration, metadata} = value
-        keys.push({name, expiration, metadata})
+        // const {expiration, metadata} = value
+        const {metadata} = value
+        const list_value: ListValue = {name}
+        // if (expiration != undefined) {
+        //   list_value.expiration = expiration
+        // }
+        if (metadata != undefined) {
+          list_value.metadata = metadata
+        }
+        keys.push(list_value)
       }
     }
     return {keys, list_complete: true}
@@ -93,7 +102,11 @@ export class EdgeKVNamespace implements KVNamespace {
 
   _put_many(kv: Record<string, InputValue>) {
     for (const [k, v] of Object.entries(kv)) {
-      this._put(k, v.value, v.metadata)
+      if (typeof v != 'string' && 'value' in v) {
+        this._put(k, v.value, v.metadata)
+      } else {
+        this._put(k, v, undefined)
+      }
     }
   }
 
