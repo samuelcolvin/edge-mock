@@ -13,6 +13,6 @@
     "declaration": true,
     "types": ["@cloudflare/workers-types", "@types/jest", "node"]
   },
-  "include": ["src", "tests"],
+  "include": ["src"],
   "exclude": ["node_modules", "lib"]
 }
