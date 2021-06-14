@@ -20,7 +20,7 @@ describe('EdgeBlob', () => {
     const blob = new EdgeBlob(['a', 'b', 'c'])
     expect(blob.size).toEqual(3)
     const stream = blob.stream()
-    expect(stream instanceof EdgeReadableStream).toStrictEqual(true)
+    expect(stream).toBeInstanceOf(EdgeReadableStream)
     expect(await (stream as EdgeReadableStream)._toString()).toEqual('abc')
   })
 

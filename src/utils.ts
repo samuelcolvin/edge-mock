@@ -21,3 +21,9 @@ export function catUint8Arrays(arrays: Uint8Array[]): Uint8Array {
   }
   return combinedArray
 }
+
+/*
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#escaping
+ * $& means the whole matched string
+ */
+export const escape_regex = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')

@@ -1,13 +1,19 @@
-import express, {request} from 'express'
+#!/usr/bin/env node
+
+import path from 'path'
+import express from 'express'
 import webpack from 'webpack'
 import fetch from 'node-fetch'
 import {makeEdgeEnv, EdgeKVNamespace} from './index'
 
-const webpack_config = './webpack.config'
-const dist_path = './dist/worker'
-const dist_assets_path = './dist/assets'
-const prepare_key = (f: string) => f.replace(/^dist\/assets\//, '')
+const cwd = process.cwd()
+const webpack_config = path.join(cwd, 'webpack.config')
+const dist_path = path.join(cwd, 'dist/worker')
+const dist_assets_path = path.join(cwd, 'dist/assets')
+const prepare_key = (f: string) => f.replace(/.*?dist\/assets\//, '')
 const port = 3000
+
+declare const global: any
 
 // require('https').globalAgent.options.ca = require('ssl-root-cas/latest').create()
 
@@ -15,19 +21,20 @@ const kv_namespace = new EdgeKVNamespace()
 
 const global_extra = {
   __STATIC_CONTENT: kv_namespace,
-  fetch
+  __STATIC_CONTENT_MANIFEST: '{}',
+  fetch,
 }
-
 const env = makeEdgeEnv(global_extra)
 
 import(webpack_config).then(wp_config => {
-  webpack(wp_config).watch({}, (err, stats) => {
+  webpack(wp_config.default).watch({}, (err, stats) => {
     console.log(stats && stats.toString('minimal'))
 
     if (!err) {
       delete require.cache[require.resolve(dist_path)]
 
       kv_namespace._from_files(dist_assets_path, prepare_key).then(() => {
+        global.__STATIC_CONTENT_MANIFEST = kv_namespace._manifest_json()
         import(dist_path)
       })
     }
@@ -51,7 +58,7 @@ app.all(/.*/, (req, res) => {
   const request = new Request(url, {method, headers: headers as Record<string, string>})
 
   const event = new FetchEvent('fetch', {request})
-  event.respondWith = (promise) => {
+  event.respondWith = promise => {
     Promise.resolve(promise).then(response => {
       res.status(response.status)
       res.set(Object.fromEntries(response.headers.entries()))
@@ -64,5 +71,3 @@ app.all(/.*/, (req, res) => {
 app.listen(port, () => {
   console.log(`dev app running at http://localhost:${port}`)
 })
-
-

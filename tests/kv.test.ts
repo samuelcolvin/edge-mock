@@ -22,6 +22,7 @@ describe('EdgeKVNamespace', () => {
   test('get-arrayBuffer', async () => {
     const kv = new EdgeKVNamespace({foo: {value: 'abc'}})
     const v = await kv.get('foo', 'arrayBuffer')
+    expect(v).toBeInstanceOf(ArrayBuffer)
     const array = new Uint8Array([97, 98, 99])
     expect(new Uint8Array(v)).toStrictEqual(array)
   })
@@ -29,7 +30,7 @@ describe('EdgeKVNamespace', () => {
   test('get-stream', async () => {
     const kv = new EdgeKVNamespace({foo: {value: 'abc'}})
     const v = await kv.get('foo', 'stream')
-    expect(v instanceof EdgeReadableStream).toStrictEqual(true)
+    expect(v).toBeInstanceOf(EdgeReadableStream)
     expect(await v._toString()).toEqual('abc')
   })
 
@@ -69,7 +70,9 @@ describe('EdgeKVNamespace', () => {
     await kv.put('foo', array.buffer)
     expect(await kv.get('foo')).toEqual('abc')
     expect(await kv.get('foo')).toEqual('abc')
-    expect(new Uint8Array(await kv.get('foo', 'arrayBuffer'))).toEqual(array)
+    const v_ab = await kv.get('foo', 'arrayBuffer')
+    expect(v_ab).toBeInstanceOf(ArrayBuffer)
+    expect(new Uint8Array(v_ab)).toEqual(array)
   })
 
   test('put-stream', async () => {
@@ -134,5 +137,20 @@ describe('EdgeKVNamespace', () => {
     expect(await kv.get('foo')).toEqual('foobar')
     await kv.delete('foo')
     expect(await kv.get('foo')).toStrictEqual(null)
+  })
+
+  test('delete', async () => {
+    const kv = new EdgeKVNamespace()
+    const count = await kv._from_files('.github/')
+    expect(count).toEqual(1)
+    expect(await kv.list()).toStrictEqual({
+      keys: [{name: 'workflows/ci.yml'}],
+      list_complete: true,
+    })
+    const content = await kv.get('workflows/ci.yml')
+    expect(content).toMatch(/^name: ci/)
+    const content_ab = await kv.get('workflows/ci.yml', 'arrayBuffer')
+    expect(content_ab).toBeInstanceOf(ArrayBuffer)
+    expect(new Uint8Array(content_ab)[0]).toEqual(110)
   })
 })

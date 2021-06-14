@@ -13,7 +13,9 @@ export class EdgeBody implements Body {
   constructor(content: BodyInit | null | undefined) {
     const body_type = get_type(content)
     if (!BodyTypes.has(body_type)) {
-      throw new TypeError(`Invalid body type "${body_type}", must be one of: Blob, ReadableStream, string, null`)
+      throw new TypeError(
+        `Invalid body type "${body_type}", must be one of: Blob, ArrayBuffer, ReadableStream, string, null or undefined`,
+      )
     }
     this._body_content = (content as BodyInternalType) || null
     this._bodyUsed = false

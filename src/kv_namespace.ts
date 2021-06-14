@@ -2,10 +2,10 @@
 // TODO expiration
 import fs from 'fs'
 import path from 'path'
-import {encode, decode} from './utils'
+import {encode, decode, escape_regex} from './utils'
 import {EdgeReadableStream} from './models'
 
-type InputValueValue = string | ArrayBuffer | ReadableStream
+type InputValueValue = string | ArrayBuffer | ReadableStream | Buffer
 interface InputObject {
   value: InputValueValue
   metadata?: Record<string, string>
@@ -31,7 +31,6 @@ interface ListValue {
 }
 
 type ValueTypeNames = 'text' | 'json' | 'arrayBuffer' | 'stream'
-const default_prepare_key = (file_name: string): string => file_name
 
 export class EdgeKVNamespace implements KVNamespace {
   protected kv: Map<string, InternalValue>
@@ -49,7 +48,6 @@ export class EdgeKVNamespace implements KVNamespace {
     const v = await this.getWithMetadata(key, options.type)
     return v.value || null
   }
-
 
   async getWithMetadata(key: string, type?: ValueTypeNames): Promise<OutputValue> {
     const v = this.kv.get(key)
@@ -100,24 +98,40 @@ export class EdgeKVNamespace implements KVNamespace {
     return {keys, list_complete: true}
   }
 
-  async _from_files(directory: string, prepare_key?: (file_name: string) => string): Promise<void> {
+  async _from_files(directory: string, prepare_key?: (file_name: string) => string): Promise<number> {
     this._clear()
-    prepare_key = prepare_key || default_prepare_key
+    if (!prepare_key) {
+      const clean_dir = directory.replace(/\/+$/, '')
+      const replace_prefix = new RegExp(`^${escape_regex(clean_dir)}\\/`)
+      prepare_key = (file_name: string) => file_name.replace(replace_prefix, '')
+    }
+    return await this._add_files(directory, prepare_key)
+  }
+
+  protected async _add_files(directory: string, prepare_key: (file_name: string) => string): Promise<number> {
+    if (!(await fs.promises.stat(directory)).isDirectory()) {
+      throw new Error(`"${directory}" is not a directory`)
+    }
 
     const files = await fs.promises.readdir(directory)
-    for( const file of files ) {
-      const file_path = path.join(directory, file )
+    let count = 0
+    for (const file of files) {
+      const file_path = path.join(directory, file)
       const stat = await fs.promises.stat(file_path)
 
       if (stat.isFile()) {
         const content = await fs.promises.readFile(file_path)
         this._put_many({[prepare_key(file_path)]: content})
+        count += 1
+      } else if (stat.isDirectory()) {
+        count += await this._add_files(file_path, prepare_key)
       }
     }
+    return count
   }
 
   _manifest_json(): string {
-    const manifest = Object.fromEntries([...this.kv.keys()].map(k => ([k, k])))
+    const manifest = Object.fromEntries([...this.kv.keys()].map(k => [k, k]))
     return JSON.stringify(manifest)
   }
 
@@ -138,6 +152,8 @@ export class EdgeKVNamespace implements KVNamespace {
   private _put(key: string, value: InputValueValue, metadata: Record<string, string> | undefined): void {
     if (typeof value == 'string') {
       value = encode(value).buffer
+    } else if (Buffer.isBuffer(value)) {
+      value = value.buffer
     } else if ('getReader' in value) {
       value = (value as EdgeReadableStream)._toArrayBuffer()
     }
