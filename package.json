@@ -16,7 +16,7 @@
   "scripts": {
     "prepublish": "tsc",
     "format": "prettier --write '*.{json,js,toml}' 'src/**/*.{ts,js}' 'tests/**/*.{ts,tsx}'",
-    "lint": "eslint --max-warnings=0 src && prettier --check '*.{json,js,toml}' 'src/**/*.{ts,js}' 'tests/**/*.{ts,tsx}'",
+    "lint": "eslint --max-warnings=0 src tests && prettier --check '*.{json,js,toml}' 'src/**/*.{ts,js}' 'tests/**/*.{ts,tsx}'",
     "test": "jest --verbose",
     "all": "yarn lint && yarn test"
   },

@@ -17,6 +17,10 @@ export class EdgeEnv {
     this.addEventListener = this.addEventListener.bind(this)
   }
 
+  get listenerAdded(): boolean {
+    return !!this.listener
+  }
+
   addEventListener(type: 'fetch', listener: FetchEventListener): void {
     if (type != 'fetch') {
       throw new Error(`only "fetch" events are supported, not "${type}"`)
