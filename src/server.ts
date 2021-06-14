@@ -62,7 +62,7 @@ app.all(/.*/, (req, res) => {
     Promise.resolve(promise).then(response => {
       res.status(response.status)
       res.set(Object.fromEntries(response.headers.entries()))
-      response.text().then(text => res.send(text))
+      response.arrayBuffer().then(ab => res.send(ab))
     })
   }
   listener(event)
