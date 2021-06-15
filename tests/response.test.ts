@@ -1,4 +1,5 @@
 import {EdgeResponse, EdgeReadableStream, EdgeBlob} from '../src'
+import {rsToArrayBuffer, rsToString} from '../src/utils'
 
 describe('EdgeResponse', () => {
   test('string', async () => {
@@ -62,12 +63,12 @@ describe('EdgeResponse', () => {
 
   test('body', async () => {
     const response = new EdgeResponse('abc')
-    expect(new Uint8Array(response._bodyContent as ArrayBuffer)).toEqual(new Uint8Array([97, 98, 99]))
     expect(response.bodyUsed).toStrictEqual(false)
     const body = response.body
     expect(body).toBeInstanceOf(EdgeReadableStream)
+    expect(response.bodyUsed).toStrictEqual(false)
+    expect(await rsToString(body as ReadableStream)).toEqual('abc')
     expect(response.bodyUsed).toStrictEqual(true)
-    expect(await (body as EdgeReadableStream)._toString()).toEqual('abc')
   })
 
   test('body', async () => {

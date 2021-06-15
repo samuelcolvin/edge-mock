@@ -31,7 +31,7 @@ export class EdgeResponse extends EdgeBody implements Response {
   }
 
   clone() {
-    return new Response(this._bodyContent, {
+    return new Response(this.body, {
       status: this.status,
       statusText: this.statusText,
       headers: this.headers,

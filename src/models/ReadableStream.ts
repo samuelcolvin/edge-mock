@@ -8,6 +8,7 @@ export class EdgeReadableStream<R = string | Uint8Array | ArrayBuffer> implement
   constructor(chunks: R[]) {
     this._internal_iterator = chunks[Symbol.iterator]()
     this._on_done_resolvers = new Set()
+    this._read_sync = this._read_sync.bind(this)
   }
 
   get locked(): boolean {
@@ -60,54 +61,6 @@ export class EdgeReadableStream<R = string | Uint8Array | ArrayBuffer> implement
       return {done: true, value: undefined}
     } else {
       return {done: false, value}
-    }
-  }
-
-  async _toString(): Promise<string> {
-    const reader = this.getReader()
-    let s = ''
-    while (true) {
-      const {done, value} = await reader.read()
-      if (done) {
-        return s
-      } else {
-        if (typeof value == 'string') {
-          s += value
-        } else {
-          s += decode(value as any)
-        }
-      }
-    }
-  }
-
-  async _toBlobParts(): Promise<BlobPart[]> {
-    const reader = this.getReader()
-    const parts: BlobPart[] = []
-    while (true) {
-      const {done, value} = await reader.read()
-      if (done) {
-        return parts
-      } else {
-        parts.push(value as any)
-      }
-    }
-  }
-
-  _toArrayBuffer(): ArrayBuffer {
-    const chunks: Uint8Array[] = []
-    while (true) {
-      const {done, value} = this._read_sync()
-      if (done) {
-        return catUint8Arrays(chunks).buffer
-      } else {
-        if (typeof value == 'string') {
-          chunks.push(encode(value))
-        } else if (value instanceof ArrayBuffer) {
-          chunks.push(new Uint8Array(value))
-        } else {
-          chunks.push(value as any)
-        }
-      }
     }
   }
 }

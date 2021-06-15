@@ -2,7 +2,7 @@
 // TODO expiration
 import fs from 'fs'
 import path from 'path'
-import {encode, decode, escape_regex} from './utils'
+import {encode, decode, escape_regex, syncRsToArrayBuffer} from './utils'
 import {EdgeReadableStream} from './models'
 
 type InputValueValue = string | ArrayBuffer | ReadableStream | Buffer
@@ -149,13 +149,16 @@ export class EdgeKVNamespace implements KVNamespace {
     }
   }
 
-  private _put(key: string, value: InputValueValue, metadata: Record<string, string> | undefined): void {
-    if (typeof value == 'string') {
-      value = encode(value).buffer
-    } else if (Buffer.isBuffer(value)) {
-      value = value.buffer
-    } else if ('getReader' in value) {
-      value = (value as EdgeReadableStream)._toArrayBuffer()
+  private _put(key: string, raw_value: InputValueValue, metadata: Record<string, string> | undefined): void {
+    let value: ArrayBuffer
+    if (typeof raw_value == 'string') {
+      value = encode(raw_value).buffer
+    } else if (Buffer.isBuffer(raw_value)) {
+      value = raw_value.buffer
+    } else if ('getReader' in raw_value) {
+      value = syncRsToArrayBuffer(raw_value)
+    } else {
+      value = raw_value
     }
     this.kv.set(key, {value, metadata})
   }

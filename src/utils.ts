@@ -23,7 +23,11 @@ export function catUint8Arrays(arrays: Uint8Array[]): Uint8Array {
   return combinedArray
 }
 
-export function bodyToArrayBuffer(body: BodyInit): ArrayBuffer {
+// type BodyInit = Blob | BufferSource | FormData | URLSearchParams | ReadableStream<Uint8Array> | string;
+// BodyInit except ReadableStream, TODO: support FormData | URLSearchParams
+type BodyObj = Blob | BufferSource | FormData | URLSearchParams | string
+
+export function bodyToArrayBuffer(body: BodyObj): ArrayBuffer {
   if (typeof body == 'string') {
     return encode(body).buffer
   } else if (body instanceof ArrayBuffer) {
@@ -31,11 +35,67 @@ export function bodyToArrayBuffer(body: BodyInit): ArrayBuffer {
   } else if ('buffer' in body) {
     return body.buffer
   } else if ('getReader' in body) {
-    const stream = body as EdgeReadableStream
-    return stream._toArrayBuffer()
+    throw new TypeError(`bodyToArrayBuffer cant handle ReadableStream's`)
   } else {
     const blob = body as EdgeBlob
     return blob._content.buffer
+  }
+}
+
+export async function rsToString(rs: ReadableStream): Promise<string> {
+  const ab = await rsToArrayBuffer(rs)
+  return decode(ab)
+}
+
+export async function rsToArrayBuffer(rs: ReadableStream): Promise<ArrayBuffer> {
+  const reader = rs.getReader()
+  const chunks: Uint8Array[] = []
+  while (true) {
+    const {done, value} = await reader.read()
+    if (done) {
+      return catUint8Arrays(chunks).buffer
+    } else {
+      chunks.push(chunkToUInt(value))
+    }
+  }
+}
+
+export function syncRsToArrayBuffer(rs: ReadableStream): ArrayBuffer {
+  const ers = rs as EdgeReadableStream
+  const chunks: Uint8Array[] = []
+  const read_sync = ers._read_sync
+  if (!read_sync) {
+    throw new TypeError('syncRsToArrayBuffer requires an instance of EdgeReadableStream')
+  }
+  while (true) {
+    const {done, value} = read_sync()
+    if (done) {
+      return catUint8Arrays(chunks).buffer
+    } else {
+      chunks.push(chunkToUInt(value as string | ArrayBuffer | Uint8Array))
+    }
+  }
+}
+
+function chunkToUInt(value: string | ArrayBuffer | Uint8Array): Uint8Array {
+  if (typeof value == 'string') {
+    return encode(value)
+  } else if (value instanceof ArrayBuffer) {
+    return new Uint8Array(value)
+  } else if ('buffer' in value) {
+    return value
+  } else {
+    throw new TypeError(`Unexpected by "${getType(value)}", expected string, ArrayBuffer or Uint8Array`)
+  }
+}
+
+export function getType(obj: any): string {
+  if (obj === null) {
+    return 'Null'
+  } else if (obj === undefined) {
+    return 'Undefined'
+  } else {
+    return Object.getPrototypeOf(obj).constructor.name
   }
 }
 

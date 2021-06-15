@@ -1,4 +1,5 @@
 import {EdgeBlob, EdgeReadableStream} from '../src'
+import {rsToString} from '../src/utils'
 
 describe('EdgeBlob', () => {
   test('string', async () => {
@@ -21,7 +22,7 @@ describe('EdgeBlob', () => {
     expect(blob.size).toEqual(3)
     const stream = blob.stream()
     expect(stream).toBeInstanceOf(EdgeReadableStream)
-    expect(await (stream as EdgeReadableStream)._toString()).toEqual('abc')
+    expect(await rsToString(stream)).toEqual('abc')
   })
 
   test('Uint8Array', async () => {
