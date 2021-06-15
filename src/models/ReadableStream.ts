@@ -1,10 +1,10 @@
 export class EdgeReadableStream<R = string | Uint8Array | ArrayBuffer> implements ReadableStream {
   protected _locked = false
-  protected _internal_iterator: IterableIterator<R>
+  protected _iterator: IterableIterator<R>
   protected readonly _on_done_resolvers: Set<BasicCallback>
 
   constructor(chunks: R[]) {
-    this._internal_iterator = chunks[Symbol.iterator]()
+    this._iterator = chunks[Symbol.iterator]()
     this._on_done_resolvers = new Set()
     this._read_sync = this._read_sync.bind(this)
   }
@@ -14,7 +14,7 @@ export class EdgeReadableStream<R = string | Uint8Array | ArrayBuffer> implement
   }
 
   cancel(_reason?: string): Promise<void> {
-    this._internal_iterator = [][Symbol.iterator]()
+    this._iterator = [][Symbol.iterator]()
     return new Promise(resolve => {
       this._on_done_resolvers.add(resolve)
     })
@@ -23,10 +23,8 @@ export class EdgeReadableStream<R = string | Uint8Array | ArrayBuffer> implement
   getReader({mode}: {mode?: 'byob'} = {}): ReadableStreamDefaultReader<R> {
     if (mode) {
       throw new TypeError('ReadableStream modes other than default are not supported')
-    } else if (this._locked) {
-      throw new Error('ReadableStream already locked')
     }
-    this._locked = true
+    this._lock()
     return new EdgeReadableStreamDefaultReader(this)
   }
 
@@ -39,7 +37,10 @@ export class EdgeReadableStream<R = string | Uint8Array | ArrayBuffer> implement
   }
 
   tee(): [ReadableStream<R>, ReadableStream<R>] {
-    throw new Error('tee not yet implemented')
+    this._lock()
+    const chunks = [...this._iterator]
+    this._iterator = [][Symbol.iterator]()
+    return [new EdgeReadableStream(chunks), new EdgeReadableStream(chunks)]
   }
 
   protected _unlock(): void {
@@ -50,8 +51,15 @@ export class EdgeReadableStream<R = string | Uint8Array | ArrayBuffer> implement
     this._on_done_resolvers.add(resolver)
   }
 
+  protected _lock(): void {
+    if (this._locked) {
+      throw new Error('ReadableStream already locked')
+    }
+    this._locked = true
+  }
+
   _read_sync(): ReadableStreamDefaultReadResult<R> {
-    const {done, value} = this._internal_iterator.next()
+    const {done, value} = this._iterator.next()
     if (done) {
       for (const resolve of this._on_done_resolvers) {
         resolve()

@@ -5,7 +5,7 @@ import {EdgeBlob} from './Blob'
 const BodyTypes = new Set(['String', 'EdgeBlob', 'EdgeReadableStream', 'ArrayBuffer', 'Null', 'Undefined'])
 
 export class EdgeBody implements Body {
-  protected readonly _stream: ReadableStream | null = null
+  protected _stream: ReadableStream | null = null
 
   constructor(content: BodyInit | null | undefined) {
     const body_type = getType(content)
@@ -24,7 +24,6 @@ export class EdgeBody implements Body {
   }
 
   get body(): ReadableStream | null {
-    this._check_used('body')
     return this._stream
   }
 
@@ -57,12 +56,13 @@ export class EdgeBody implements Body {
 
   async json(): Promise<any> {
     this._check_used('json')
+    let text: string
     if (this._stream) {
-      const text = await rsToString(this._stream)
-      return JSON.parse(text)
+      text = await rsToString(this._stream)
     } else {
-      return null
+      text = ''
     }
+    return JSON.parse(text)
   }
 
   async text(): Promise<string> {

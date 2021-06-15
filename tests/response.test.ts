@@ -71,10 +71,107 @@ describe('EdgeResponse', () => {
     expect(response.bodyUsed).toStrictEqual(true)
   })
 
-  test('body', async () => {
+  test('no-body', async () => {
     const response = new EdgeResponse()
     expect(response.bodyUsed).toStrictEqual(false)
     expect(response.body).toStrictEqual(null)
     expect(response.bodyUsed).toStrictEqual(false)
+  })
+
+  test('blob', async () => {
+    const response = new EdgeResponse('abc')
+    expect(response.bodyUsed).toStrictEqual(false)
+    const blob = await response.blob()
+    expect(blob).toBeInstanceOf(EdgeBlob)
+    expect(response.bodyUsed).toStrictEqual(true)
+    expect(await blob.text()).toEqual('abc')
+  })
+
+  test('blob-no-body', async () => {
+    const response = new EdgeResponse()
+    expect(response.bodyUsed).toStrictEqual(false)
+    const blob = await response.blob()
+    expect(blob).toBeInstanceOf(EdgeBlob)
+    expect(response.bodyUsed).toStrictEqual(false)
+    expect(await blob.text()).toEqual('')
+  })
+
+  test('json', async () => {
+    const response = new EdgeResponse('{"foo": 123}')
+    expect(response.bodyUsed).toStrictEqual(false)
+    expect(await response.json()).toStrictEqual({foo: 123})
+    expect(response.bodyUsed).toStrictEqual(true)
+  })
+
+  test('json-no-body', async () => {
+    const response = new EdgeResponse()
+    expect(response.bodyUsed).toStrictEqual(false)
+    await expect(response.json()).rejects.toThrow('Unexpected end of JSON input')
+    expect(response.bodyUsed).toStrictEqual(false)
+  })
+
+  test('arrayBuffer', async () => {
+    const response = new EdgeResponse('abc')
+    expect(response.bodyUsed).toStrictEqual(false)
+    expect(new Uint8Array(await response.arrayBuffer())).toStrictEqual(new Uint8Array([97, 98, 99]))
+    expect(response.bodyUsed).toStrictEqual(true)
+  })
+
+  test('arrayBuffer-no-body', async () => {
+    const response = new EdgeResponse()
+    expect(response.bodyUsed).toStrictEqual(false)
+    expect(new Uint8Array(await response.arrayBuffer())).toStrictEqual(new Uint8Array([]))
+    expect(response.bodyUsed).toStrictEqual(false)
+  })
+
+  test('formData', async () => {
+    const response = new EdgeResponse()
+    await expect(response.formData()).rejects.toThrow('formData not implemented yet')
+  })
+
+  test('trailer', async () => {
+    const response = new EdgeResponse()
+    const t = async () => await response.trailer
+    await expect(t()).rejects.toThrow('trailer not yet implemented')
+  })
+
+  test('redirect', async () => {
+    const response = EdgeResponse.redirect('https://www.example.com')
+    expect(response.status).toBe(302)
+    expect(response.headers.get('location')).toBe('https://www.example.com/')
+  })
+
+  test('redirect-invalid', async () => {
+    const t = () => EdgeResponse.redirect('https://www.example.com', 200)
+    expect(t).toThrow(new RangeError('Invalid status code'))
+  })
+
+  test('clone', async () => {
+    const r1 = new EdgeResponse('foobar', {status: 404})
+    const r2 = r1.clone()
+    expect(r1.status).toBe(404)
+    expect(r2.status).toBe(404)
+    expect(r1.body).toBeTruthy()
+    expect(await r1.text()).toBe('foobar')
+    expect(r2.body).toBeTruthy()
+    expect(await r2.text()).toBe('foobar')
+  })
+
+  test('clone-no-body', async () => {
+    const r1 = new EdgeResponse(undefined, {status: 405})
+    const r2 = r1.clone()
+    expect(r1.status).toBe(405)
+    expect(r2.status).toBe(405)
+    expect(r1.body).toBeFalsy()
+    expect(await r1.text()).toBe('')
+    expect(r2.body).toBeFalsy()
+    expect(await r2.text()).toBe('')
+  })
+
+  test('clone-body-used', async () => {
+    const r1 = new EdgeResponse('foobar', {status: 405})
+    await r1.text()
+    const t = () => r1.clone()
+    expect(t).toThrow(new TypeError('Response body is already used'))
   })
 })

@@ -30,12 +30,17 @@ export class EdgeResponse extends EdgeBody implements Response {
     throw new Error('trailer not yet implemented')
   }
 
-  clone() {
-    return new Response(this.body, {
-      status: this.status,
-      statusText: this.statusText,
-      headers: this.headers,
-    })
+  clone(): Response {
+    const init = {status: this.status, statusText: this.statusText, headers: this.headers}
+    if (!this.body) {
+      return new EdgeResponse(null, init)
+    } else if (this._stream?.locked) {
+      throw new TypeError('Response body is already used')
+    } else {
+      const [s1, s2] = this.body.tee()
+      this._stream = s1
+      return new EdgeResponse(s2, init)
+    }
   }
 
   static redirect(url: string, status = 302): Response {
@@ -43,7 +48,7 @@ export class EdgeResponse extends EdgeBody implements Response {
     if (!RedirectStatuses.has(status)) {
       throw new RangeError('Invalid status code')
     }
-    return new Response(null, {
+    return new EdgeResponse(null, {
       status: status,
       headers: {
         location: new URL(url).href,

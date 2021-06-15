@@ -1,4 +1,5 @@
 import {EdgeReadableStream} from '../src'
+import {rsToString} from '../src/utils'
 
 describe('EdgeKVNamespace', () => {
   test('get_reader', async () => {
@@ -60,10 +61,20 @@ describe('EdgeKVNamespace', () => {
     expect(cancelled).toBeTruthy()
   })
 
-  test('no-implemented', async () => {
+  test('tee', async () => {
     const stream = new EdgeReadableStream(['foo', 'bar'])
-    expect(stream.pipeThrough).toThrow('pipeThrough not yet implemented')
-    expect(stream.pipeTo).toThrow('pipeTo not yet implemented')
-    expect(stream.tee).toThrow('tee not yet implemented')
+    const [s1, s2] = stream.tee()
+    expect(stream.locked).toBeTruthy()
+    expect(s1.locked).toBeFalsy()
+    expect(await rsToString(s1)).toEqual('foobar')
+    expect(await rsToString(s2)).toEqual('foobar')
+  })
+
+  test('pipeThrough', async () => {
+    expect(new EdgeReadableStream(['foo', 'bar']).pipeThrough).toThrow('pipeThrough not yet implemented')
+  })
+
+  test('pipeTo', async () => {
+    expect(new EdgeReadableStream(['foo', 'bar']).pipeTo).toThrow('pipeTo not yet implemented')
   })
 })
