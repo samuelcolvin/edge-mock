@@ -16,7 +16,7 @@ export class EdgeResponse extends EdgeBody implements Response {
 
   constructor(body?: BodyInit | undefined | null, init: ResponseInit = {}, url = 'https://example.com', extra?: any) {
     super(body)
-    this.status = init.status || 200
+    this.status = init.status === undefined ? 200 : init.status
     this.ok = this.status >= 200 && this.status < 300
     this.statusText = init.statusText || 'OK'
     this.headers = as_headers(init.headers)
@@ -56,7 +56,7 @@ export class EdgeResponse extends EdgeBody implements Response {
     })
   }
 
-  static error() {
-    return new Response(null, {status: 0})
+  static error(): Response {
+    return new EdgeResponse(null, {status: 0})
   }
 }

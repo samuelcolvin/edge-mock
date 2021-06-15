@@ -146,14 +146,20 @@ describe('EdgeResponse', () => {
     expect(t).toThrow(new RangeError('Invalid status code'))
   })
 
+  test('error', async () => {
+    const r = EdgeResponse.error()
+    expect(r.status).toBe(0)
+    expect(r.body).toBeNull()
+  })
+
   test('clone', async () => {
     const r1 = new EdgeResponse('foobar', {status: 404})
     const r2 = r1.clone()
     expect(r1.status).toBe(404)
     expect(r2.status).toBe(404)
-    expect(r1.body).toBeTruthy()
+    expect(r1.body).not.toBeNull()
     expect(await r1.text()).toBe('foobar')
-    expect(r2.body).toBeTruthy()
+    expect(r2.body).not.toBeNull()
     expect(await r2.text()).toBe('foobar')
   })
 
@@ -162,9 +168,9 @@ describe('EdgeResponse', () => {
     const r2 = r1.clone()
     expect(r1.status).toBe(405)
     expect(r2.status).toBe(405)
-    expect(r1.body).toBeFalsy()
+    expect(r1.body).toBeNull()
     expect(await r1.text()).toBe('')
-    expect(r2.body).toBeFalsy()
+    expect(r2.body).toBeNull()
     expect(await r2.text()).toBe('')
   })
 
