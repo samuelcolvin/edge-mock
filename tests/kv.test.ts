@@ -155,4 +155,9 @@ describe('EdgeKVNamespace', () => {
 
     expect(kv._manifest_json()).toEqual('{"workflows/ci.yml":"workflows/ci.yml"}')
   })
+
+  test('_add_files-error', async () => {
+    const kv = new EdgeKVNamespace()
+    await expect(kv._add_files('package.json')).rejects.toThrow('package.json" is not a directory')
+  })
 })

@@ -38,7 +38,7 @@ export class EdgeRequest extends EdgeBody implements Request {
     if (urlOrRequest instanceof EdgeRequest) {
       url = urlOrRequest.url
       init = {
-        body: (urlOrRequest as any)._body_content,
+        body: urlOrRequest._bodyContent,
         credentials: urlOrRequest.credentials,
         headers: urlOrRequest.headers,
         method: urlOrRequest.method,
@@ -72,7 +72,7 @@ export class EdgeRequest extends EdgeBody implements Request {
     return new Request(this.url, {
       method: this.method,
       headers: this.headers,
-      body: this._body_content,
+      body: this._bodyContent,
       mode: this.mode,
       credentials: this.credentials,
       cache: this.cache,

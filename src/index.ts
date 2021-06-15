@@ -1,6 +1,6 @@
 import {EdgeRequest, EdgeBlob, EdgeResponse, EdgeFetchEvent, EdgeHeaders, EdgeReadableStream} from './models'
 export {EdgeKVNamespace} from './kv_namespace'
-import {stub_fetch} from './fetch'
+import stub_fetch from './stub_fetch'
 
 export {EdgeRequest, EdgeBlob, EdgeResponse, EdgeFetchEvent, EdgeHeaders, EdgeReadableStream, stub_fetch}
 

@@ -1,49 +1,37 @@
 // https://developer.mozilla.org/en-US/docs/Web/API/Blob
+import {decode, catUint8Arrays, bodyToArrayBuffer} from '../utils'
 import {EdgeReadableStream} from './ReadableStream'
-import {encode, decode, catUint8Arrays} from '../utils'
 import {BlobOptions} from 'buffer'
 
 export class EdgeBlob implements Blob {
   readonly type: string
-  protected readonly content: Uint8Array
+  readonly _content: Uint8Array
   protected readonly encoding: string
 
   constructor(parts: BlobPart[], options: BlobOptions = {}) {
     this.type = options.type || ''
     this.encoding = options.encoding || 'utf8' // currently unused
-    const chunks: Uint8Array[] = []
-    for (const part of parts) {
-      if (typeof part == 'string') {
-        chunks.push(encode(part))
-      } else if (part instanceof ArrayBuffer) {
-        chunks.push(new Uint8Array(part))
-      } else if ('buffer' in part) {
-        chunks.push(new Uint8Array(part.buffer))
-      } else {
-        chunks.push((part as any).content)
-      }
-    }
-    this.content = catUint8Arrays(chunks)
+    this._content = catUint8Arrays(parts.map(p => new Uint8Array(bodyToArrayBuffer(p))))
   }
 
   get size(): number {
-    return this.content.length
+    return this._content.length
   }
 
   async text(): Promise<string> {
-    return decode(this.content)
+    return decode(this._content)
   }
 
   async arrayBuffer(): Promise<ArrayBuffer> {
-    return this.content.buffer
+    return this._content.buffer
   }
 
   stream(): ReadableStream {
-    return new EdgeReadableStream([this.content])
+    return new EdgeReadableStream([this._content])
   }
 
   slice(start = 0, end: number | undefined = undefined, contentType?: string): Blob {
     const options = contentType ? {type: contentType} : {}
-    return new EdgeBlob([this.content.slice(start, end)], options)
+    return new EdgeBlob([this._content.slice(start, end)], options)
   }
 }

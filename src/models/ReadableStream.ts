@@ -2,12 +2,12 @@ import {catUint8Arrays, decode, encode} from '../utils'
 
 export class EdgeReadableStream<R = string | Uint8Array> implements ReadableStream {
   protected _locked = false
-  protected internal_iterator: IterableIterator<R>
-  protected readonly on_done_resolvers: Set<BasicCallback>
+  protected _internal_iterator: IterableIterator<R>
+  protected readonly _on_done_resolvers: Set<BasicCallback>
 
   constructor(chunks: R[]) {
-    this.internal_iterator = chunks[Symbol.iterator]()
-    this.on_done_resolvers = new Set()
+    this._internal_iterator = chunks[Symbol.iterator]()
+    this._on_done_resolvers = new Set()
   }
 
   get locked(): boolean {
@@ -15,9 +15,9 @@ export class EdgeReadableStream<R = string | Uint8Array> implements ReadableStre
   }
 
   cancel(_reason?: string): Promise<void> {
-    this.internal_iterator = [][Symbol.iterator]()
+    this._internal_iterator = [][Symbol.iterator]()
     return new Promise(resolve => {
-      this.on_done_resolvers.add(resolve)
+      this._on_done_resolvers.add(resolve)
     })
   }
 
@@ -48,13 +48,13 @@ export class EdgeReadableStream<R = string | Uint8Array> implements ReadableStre
   }
 
   protected _add_resolver(resolver: BasicCallback): void {
-    this.on_done_resolvers.add(resolver)
+    this._on_done_resolvers.add(resolver)
   }
 
   _read_sync(): ReadableStreamDefaultReadResult<R> {
-    const {done, value} = this.internal_iterator.next()
+    const {done, value} = this._internal_iterator.next()
     if (done) {
-      for (const resolve of this.on_done_resolvers) {
+      for (const resolve of this._on_done_resolvers) {
         resolve()
       }
       return {done: true, value: undefined}
