@@ -1,24 +1,27 @@
 import {EdgeRequest, EdgeBlob, EdgeResponse, EdgeFetchEvent, EdgeHeaders, EdgeReadableStream} from './models'
 export {EdgeKVNamespace} from './kv_namespace'
-import {stub_fetch} from './fetch'
+import stub_fetch from './stub_fetch'
 
 export {EdgeRequest, EdgeBlob, EdgeResponse, EdgeFetchEvent, EdgeHeaders, EdgeReadableStream, stub_fetch}
 
 declare const global: any
 
-interface FetchEventListener {
-  (evt: FetchEvent): void
-}
+type FetchEventListener = (event: FetchEvent) => void
 
 export class EdgeEnv {
   protected listener: FetchEventListener | null = null
 
   constructor() {
     this.addEventListener = this.addEventListener.bind(this)
+    this.getListener = this.getListener.bind(this)
   }
 
-  get listenerAdded(): boolean {
-    return !!this.listener
+  getListener(): FetchEventListener {
+    if (this.listener) {
+      return this.listener
+    } else {
+      throw new Error('FetchEvent listener not yet added via addEventListener')
+    }
   }
 
   addEventListener(type: 'fetch', listener: FetchEventListener): void {

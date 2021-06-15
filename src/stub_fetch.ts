@@ -1,9 +1,14 @@
 import {EdgeResponse} from './models'
 import {check_method} from './models/Request'
 
-export async function stub_fetch(resource: string, init: RequestInit): Promise<Response> {
+export default async function stub_fetch(resource: string | URL, init: RequestInit | Request = {}): Promise<Response> {
   const method = check_method(init.method)
-  const url = new URL(resource)
+  let url: URL
+  if (resource instanceof URL) {
+    url = resource
+  } else {
+    url = new URL(resource)
+  }
   if (url.href == 'https://example.com/') {
     return new EdgeResponse(
       '<h1>response from example.com</h1>',

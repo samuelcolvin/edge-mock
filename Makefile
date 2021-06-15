@@ -20,6 +20,9 @@ testcov:
 .PHONY: all
 all: lint testcov
 
+.PHONY: build
+build:
+	yarn prepublishOnly
 
 .PHONY: clean
 clean:

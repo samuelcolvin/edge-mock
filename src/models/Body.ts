@@ -1,27 +1,36 @@
-import {decode} from '../utils'
+import {decode, bodyToArrayBuffer} from '../utils'
 import {EdgeReadableStream} from './ReadableStream'
 import {EdgeBlob} from './Blob'
 
 const BodyTypes = new Set(['String', 'EdgeBlob', 'EdgeReadableStream', 'ArrayBuffer', 'Null', 'Undefined'])
 
-type BodyInternalType = string | Blob | ReadableStream | ArrayBuffer | null
-
 export class EdgeBody implements Body {
-  protected readonly _body_content: BodyInternalType
+  readonly _bodyContent: ArrayBuffer | null
   protected _bodyUsed: boolean
 
   constructor(content: BodyInit | null | undefined) {
     const body_type = get_type(content)
     if (!BodyTypes.has(body_type)) {
-      throw new TypeError(`Invalid body type "${body_type}", must be one of: Blob, ReadableStream, string, null`)
+      throw new TypeError(
+        `Invalid body type "${body_type}", must be one of: Blob, ArrayBuffer, ReadableStream, string, null or undefined`,
+      )
     }
-    this._body_content = (content as BodyInternalType) || null
+    if (content) {
+      this._bodyContent = bodyToArrayBuffer(content)
+    } else {
+      this._bodyContent = null
+    }
     this._bodyUsed = false
   }
 
-  get body(): ReadableStream {
-    this.check_used('body')
-    return new EdgeReadableStream([this._body_content])
+  get body(): ReadableStream | null {
+    if (this._bodyContent) {
+      // shouldn't work this way, should use a single stream
+      this.check_used('body')
+      return new EdgeReadableStream([this._bodyContent])
+    } else {
+      return null
+    }
   }
 
   get bodyUsed(): boolean {
@@ -30,55 +39,37 @@ export class EdgeBody implements Body {
 
   async arrayBuffer(): Promise<ArrayBuffer> {
     this.check_used('arrayBuffer')
-    const blob = await this._blob()
-    return blob.arrayBuffer()
+    if (this._bodyContent) {
+      return this._bodyContent
+    } else {
+      return new Uint8Array([]).buffer
+    }
   }
 
   async blob(): Promise<Blob> {
     this.check_used('blob')
-    return await this._blob()
+    return new EdgeBlob(this._bodyContent ? [this._bodyContent] : [])
   }
 
   async json(): Promise<any> {
     this.check_used('json')
-    return JSON.parse(await this._text())
+    return JSON.parse(this._text())
   }
 
   async text(): Promise<string> {
     this.check_used('text')
-    return await this._text()
+    return this._text()
   }
 
   async formData(): Promise<FormData> {
     throw new Error('formData not implemented yet')
   }
 
-  protected async _text(): Promise<string> {
-    if (typeof this._body_content == 'string') {
-      return this._body_content
-    } else if (this._body_content instanceof EdgeBlob) {
-      return await this._body_content.text()
-    } else if (this._body_content instanceof ArrayBuffer) {
-      return decode(this._body_content)
-    } else if (this._body_content instanceof EdgeReadableStream) {
-      return await this._body_content._toString()
+  protected _text(): string {
+    if (this._bodyContent) {
+      return decode(this._bodyContent)
     } else {
       return ''
-    }
-  }
-
-  protected async _blob(): Promise<Blob> {
-    if (typeof this._body_content == 'string') {
-      return new EdgeBlob([this._body_content])
-    } else if (this._body_content instanceof ArrayBuffer) {
-      return new EdgeBlob([this._body_content])
-    } else if (this._body_content instanceof EdgeBlob) {
-      return this._body_content
-    } else if (this._body_content instanceof EdgeReadableStream) {
-      const parts = await this._body_content._toBlobParts()
-      return new EdgeBlob(parts)
-    } else {
-      return new EdgeBlob([])
     }
   }
 

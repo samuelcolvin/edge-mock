@@ -1,9 +1,11 @@
 // https://developers.cloudflare.com/workers/runtime-apis/kv
 // TODO expiration
-import {encode, decode} from './utils'
+import fs from 'fs'
+import path from 'path'
+import {encode, decode, escape_regex} from './utils'
 import {EdgeReadableStream} from './models'
 
-type InputValueValue = string | ArrayBuffer | ReadableStream
+type InputValueValue = string | ArrayBuffer | ReadableStream | Buffer
 interface InputObject {
   value: InputValueValue
   metadata?: Record<string, string>
@@ -96,6 +98,43 @@ export class EdgeKVNamespace implements KVNamespace {
     return {keys, list_complete: true}
   }
 
+  async _add_files(directory: string, prepare_key?: (file_name: string) => string): Promise<number> {
+    this._clear()
+    if (!prepare_key) {
+      const clean_dir = directory.replace(/\/+$/, '')
+      const replace_prefix = new RegExp(`^${escape_regex(clean_dir)}\\/`)
+      prepare_key = (file_name: string) => file_name.replace(replace_prefix, '')
+    }
+    return await this._add_directory(directory, prepare_key)
+  }
+
+  protected async _add_directory(directory: string, prepare_key: (file_name: string) => string): Promise<number> {
+    if (!(await fs.promises.stat(directory)).isDirectory()) {
+      throw new Error(`"${directory}" is not a directory`)
+    }
+
+    const files = await fs.promises.readdir(directory)
+    let count = 0
+    for (const file of files) {
+      const file_path = path.join(directory, file)
+      const stat = await fs.promises.stat(file_path)
+
+      if (stat.isFile()) {
+        const content = await fs.promises.readFile(file_path)
+        this._put_many({[prepare_key(file_path)]: content})
+        count += 1
+      } else if (stat.isDirectory()) {
+        count += await this._add_directory(file_path, prepare_key)
+      }
+    }
+    return count
+  }
+
+  _manifest_json(): string {
+    const manifest = Object.fromEntries([...this.kv.keys()].map(k => [k, k]))
+    return JSON.stringify(manifest)
+  }
+
   _clear() {
     this.kv.clear()
   }
@@ -113,6 +152,8 @@ export class EdgeKVNamespace implements KVNamespace {
   private _put(key: string, value: InputValueValue, metadata: Record<string, string> | undefined): void {
     if (typeof value == 'string') {
       value = encode(value).buffer
+    } else if (Buffer.isBuffer(value)) {
+      value = value.buffer
     } else if ('getReader' in value) {
       value = (value as EdgeReadableStream)._toArrayBuffer()
     }

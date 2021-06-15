@@ -49,4 +49,31 @@ describe('EdgeResponse', () => {
     const buffer = await response.arrayBuffer()
     expect(new Uint8Array(buffer)).toEqual(new Uint8Array([97, 98, 100, 101]))
   })
+
+  test('invalid-body', async () => {
+    const d = new Date() as any
+    const t = () => new EdgeResponse(d)
+    expect(t).toThrow(
+      new TypeError(
+        'Invalid body type "Date", must be one of: Blob, ArrayBuffer, ReadableStream, string, null or undefined',
+      ),
+    )
+  })
+
+  test('body', async () => {
+    const response = new EdgeResponse('abc')
+    expect(new Uint8Array(response._bodyContent as ArrayBuffer)).toEqual(new Uint8Array([97, 98, 99]))
+    expect(response.bodyUsed).toStrictEqual(false)
+    const body = response.body
+    expect(body).toBeInstanceOf(EdgeReadableStream)
+    expect(response.bodyUsed).toStrictEqual(true)
+    expect(await (body as EdgeReadableStream)._toString()).toEqual('abc')
+  })
+
+  test('body', async () => {
+    const response = new EdgeResponse()
+    expect(response.bodyUsed).toStrictEqual(false)
+    expect(response.body).toStrictEqual(null)
+    expect(response.bodyUsed).toStrictEqual(false)
+  })
 })

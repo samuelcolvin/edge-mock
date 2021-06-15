@@ -15,11 +15,11 @@ describe('makeEdgeEnv', () => {
   test('basic', async () => {
     const env = makeEdgeEnv()
 
-    expect(env.listenerAdded).toBeFalsy()
+    expect(env.getListener).toThrow('FetchEvent listener not yet added via addEventListener')
     addEventListener('fetch', e => {
       e.respondWith(handleRequest(e))
     })
-    expect(env.listenerAdded).toBeTruthy()
+    expect(typeof env.getListener()).toEqual('function')
     const request = new Request('/bar/', {method: 'POST', body: 'testing'})
     const event = new FetchEvent('fetch', {request})
     env.dispatchEvent(event)
