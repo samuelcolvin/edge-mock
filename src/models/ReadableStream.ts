@@ -1,6 +1,6 @@
 import {catUint8Arrays, decode, encode} from '../utils'
 
-export class EdgeReadableStream<R = string | Uint8Array> implements ReadableStream {
+export class EdgeReadableStream<R = string | Uint8Array | ArrayBuffer> implements ReadableStream {
   protected _locked = false
   protected _internal_iterator: IterableIterator<R>
   protected readonly _on_done_resolvers: Set<BasicCallback>
@@ -102,6 +102,8 @@ export class EdgeReadableStream<R = string | Uint8Array> implements ReadableStre
       } else {
         if (typeof value == 'string') {
           chunks.push(encode(value))
+        } else if (value instanceof ArrayBuffer) {
+          chunks.push(new Uint8Array(value))
         } else {
           chunks.push(value as any)
         }

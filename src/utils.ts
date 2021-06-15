@@ -39,7 +39,6 @@ export function bodyToArrayBuffer(body: BodyInit): ArrayBuffer {
   }
 }
 
-
 /*
  * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#escaping
  * $& means the whole matched string

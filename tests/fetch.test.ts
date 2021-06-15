@@ -37,10 +37,10 @@ describe('live_fetch', () => {
         'Accept-Encoding': 'gzip,deflate',
         Host: 'httpbin.org',
         'User-Agent': 'node-fetch/1.0 (+https://github.com/bitinn/node-fetch)',
-        'X-Amzn-Trace-Id': expect.any(String)
+        'X-Amzn-Trace-Id': expect.any(String),
       },
       origin: expect.any(String),
-      url: 'https://httpbin.org/get'
+      url: 'https://httpbin.org/get',
     })
     expect(r.url).toBe('https://httpbin.org/get')
   })
@@ -63,13 +63,12 @@ describe('live_fetch', () => {
     expect(obj.data).toEqual('foobar')
   })
 
-  // test('request', async () => {
-  //   const body = new Uint8Array([100, 101, 102])
-  //   const request = new EdgeRequest('https://www.example.com', {method: 'POST', body: body.buffer})
-  //   const r = await live_fetch('https://httpbin.org/post', request)
-  //   expect(r.status).toEqual(200)
-  //   const obj = await r.json()
-  //   console.log(obj)
-  //   // expect(obj.data).toEqual('foobar')
-  // })
+  test('request', async () => {
+    const body = new Uint8Array([100, 101, 102])
+    const request = new EdgeRequest('https://www.example.com', {method: 'POST', body: body.buffer})
+    const r = await live_fetch('https://httpbin.org/post', request)
+    expect(r.status).toEqual(200)
+    const obj = await r.json()
+    expect(obj.data).toEqual('def')
+  })
 })

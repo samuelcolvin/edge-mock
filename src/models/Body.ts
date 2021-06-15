@@ -48,7 +48,7 @@ export class EdgeBody implements Body {
 
   async blob(): Promise<Blob> {
     this.check_used('blob')
-    return new EdgeBlob(this._bodyContent ? [this._bodyContent]: [])
+    return new EdgeBlob(this._bodyContent ? [this._bodyContent] : [])
   }
 
   async json(): Promise<any> {
