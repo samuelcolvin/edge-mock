@@ -24,7 +24,7 @@ export class EdgeReadableStream<R = string | Uint8Array | ArrayBuffer> implement
       throw new TypeError('ReadableStream modes other than default are not supported')
     }
     this._lock()
-    return new EdgeReadableStreamDefaultReader(this, resolver => this._add_resolver(resolver))
+    return new EdgeReadableStreamDefaultReader(this)
   }
 
   pipeThrough<T>(_transform: ReadableWritablePair<T, R>, _options?: StreamPipeOptions): ReadableStream<T> {
@@ -57,7 +57,7 @@ export class EdgeReadableStream<R = string | Uint8Array | ArrayBuffer> implement
     this._locked = true
   }
 
-  _syncRead(): ReadableStreamDefaultReadResult<R> {
+  protected _syncRead(): ReadableStreamDefaultReadResult<R> {
     const {done, value} = this._iterator.next()
     if (done) {
       for (const resolve of this._on_done_resolvers) {
@@ -76,10 +76,11 @@ class EdgeReadableStreamDefaultReader<R> implements ReadableStreamDefaultReader 
   protected readonly stream: EdgeReadableStream<R>
   protected readonly closed_promise: Promise<undefined>
 
-  constructor(stream: EdgeReadableStream<R>, add_resolver: (resolver: BasicCallback) => void) {
+  constructor(stream: EdgeReadableStream<R>) {
     this.stream = stream
+    const _stream = stream as any
     this.closed_promise = new Promise(resolve => {
-      add_resolver(() => resolve(undefined))
+      _stream._add_resolver(() => resolve(undefined))
     })
   }
 
@@ -88,7 +89,8 @@ class EdgeReadableStreamDefaultReader<R> implements ReadableStreamDefaultReader 
   }
 
   async read(): Promise<ReadableStreamDefaultReadResult<R>> {
-    return this.stream._syncRead()
+    const stream = this.stream as any
+    return stream._syncRead()
   }
 
   cancel(reason?: any): Promise<void> {

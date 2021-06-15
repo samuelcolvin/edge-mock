@@ -2,7 +2,7 @@
 // TODO expiration
 import fs from 'fs'
 import path from 'path'
-import {encode, decode, escape_regex, syncRsToArrayBuffer} from './utils'
+import {encode, decode, escape_regex, rsToArrayBuffer} from './utils'
 import {EdgeReadableStream} from './models'
 
 type InputValueValue = string | ArrayBuffer | ReadableStream | Buffer
@@ -35,9 +35,8 @@ type ValueTypeNames = 'text' | 'json' | 'arrayBuffer' | 'stream'
 export class EdgeKVNamespace implements KVNamespace {
   protected kv: Map<string, InternalValue>
 
-  constructor(kv: Record<string, InputValue> = {}) {
+  constructor() {
     this.kv = new Map()
-    this._put_many(kv)
   }
 
   async get(key: string, options?: {type?: ValueTypeNames; cacheTtl?: number} | ValueTypeNames): Promise<any> {
@@ -57,8 +56,18 @@ export class EdgeKVNamespace implements KVNamespace {
     return {value: prepare_value(v.value, type), metadata: v.metadata || {}}
   }
 
-  async put(key: string, value: InputValueValue, extra: {metadata?: Record<string, string>} = {}): Promise<void> {
-    this._put(key, value, extra.metadata)
+  async put(key: string, value: InputValueValue, {metadata}: {metadata?: Record<string, string>} = {}): Promise<void> {
+    let _value: ArrayBuffer
+    if (typeof value == 'string') {
+      _value = encode(value).buffer
+    } else if (Buffer.isBuffer(value)) {
+      _value = value.buffer
+    } else if ('getReader' in value) {
+      _value = await rsToArrayBuffer(value)
+    } else {
+      _value = value
+    }
+    this.kv.set(key, {value: _value, metadata})
   }
 
   async delete(key: string): Promise<void> {
@@ -121,7 +130,7 @@ export class EdgeKVNamespace implements KVNamespace {
 
       if (stat.isFile()) {
         const content = await fs.promises.readFile(file_path)
-        this._put_many({[prepare_key(file_path)]: content})
+        await this.put(prepare_key(file_path), content)
         count += 1
       } else if (stat.isDirectory()) {
         count += await this._add_directory(file_path, prepare_key)
@@ -130,7 +139,7 @@ export class EdgeKVNamespace implements KVNamespace {
     return count
   }
 
-  _manifest_json(): string {
+  _manifestJson(): string {
     const manifest = Object.fromEntries([...this.kv.keys()].map(k => [k, k]))
     return JSON.stringify(manifest)
   }
@@ -139,28 +148,16 @@ export class EdgeKVNamespace implements KVNamespace {
     this.kv.clear()
   }
 
-  _put_many(kv: Record<string, InputValue>) {
+  async _putMany(kv: Record<string, InputValue>): Promise<void> {
+    const promises: Promise<void>[] = []
     for (const [k, v] of Object.entries(kv)) {
       if (typeof v != 'string' && 'value' in v) {
-        this._put(k, v.value, v.metadata)
+        promises.push(this.put(k, v.value, {metadata: v.metadata}))
       } else {
-        this._put(k, v, undefined)
+        promises.push(this.put(k, v, undefined))
       }
     }
-  }
-
-  private _put(key: string, raw_value: InputValueValue, metadata: Record<string, string> | undefined): void {
-    let value: ArrayBuffer
-    if (typeof raw_value == 'string') {
-      value = encode(raw_value).buffer
-    } else if (Buffer.isBuffer(raw_value)) {
-      value = raw_value.buffer
-    } else if ('getReader' in raw_value) {
-      value = syncRsToArrayBuffer(raw_value)
-    } else {
-      value = raw_value
-    }
-    this.kv.set(key, {value, metadata})
+    await Promise.all(promises)
   }
 }
 

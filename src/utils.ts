@@ -1,6 +1,5 @@
 import {TextDecoder, TextEncoder} from 'util'
 import type {EdgeBlob} from './models'
-import {EdgeReadableStream} from './models'
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()
@@ -57,22 +56,6 @@ export async function rsToArrayBuffer(rs: ReadableStream): Promise<ArrayBuffer> 
       return catUint8Arrays(chunks).buffer
     } else {
       chunks.push(chunkToUInt(value))
-    }
-  }
-}
-
-export function syncRsToArrayBuffer(rs: ReadableStream): ArrayBuffer {
-  const ers = rs as EdgeReadableStream
-  const chunks: Uint8Array[] = []
-  if (!('_syncRead' in ers)) {
-    throw new TypeError('syncRsToArrayBuffer requires an instance of EdgeReadableStream')
-  }
-  while (true) {
-    const {done, value} = ers._syncRead()
-    if (done) {
-      return catUint8Arrays(chunks).buffer
-    } else {
-      chunks.push(chunkToUInt(value as string | ArrayBuffer | Uint8Array))
     }
   }
 }

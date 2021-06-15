@@ -3,7 +3,8 @@ import {rsToString} from '../src/utils'
 
 describe('EdgeKVNamespace', () => {
   test('get-value', async () => {
-    const kv = new EdgeKVNamespace({foo: {value: 'Foo Value'}})
+    const kv = new EdgeKVNamespace()
+    await kv.put('foo', 'Foo Value')
     const v = await kv.get('foo')
     expect(v).toEqual('Foo Value')
   })
@@ -15,13 +16,15 @@ describe('EdgeKVNamespace', () => {
   })
 
   test('get-json', async () => {
-    const kv = new EdgeKVNamespace({foo: {value: '{"spam": 123}'}})
+    const kv = new EdgeKVNamespace()
+    await kv.put('foo', '{"spam": 123}')
     const v = await kv.get('foo', 'json')
     expect(v).toStrictEqual({spam: 123})
   })
 
   test('get-arrayBuffer', async () => {
-    const kv = new EdgeKVNamespace({foo: {value: 'abc'}})
+    const kv = new EdgeKVNamespace()
+    await kv.put('foo', 'abc')
     const v = await kv.get('foo', 'arrayBuffer')
     expect(v).toBeInstanceOf(ArrayBuffer)
     const array = new Uint8Array([97, 98, 99])
@@ -29,26 +32,30 @@ describe('EdgeKVNamespace', () => {
   })
 
   test('get-stream', async () => {
-    const kv = new EdgeKVNamespace({foo: {value: 'abc'}})
+    const kv = new EdgeKVNamespace()
+    await kv.put('foo', 'abc')
     const v = await kv.get('foo', 'stream')
     expect(v).toBeInstanceOf(EdgeReadableStream)
     expect(await rsToString(v)).toEqual('abc')
   })
 
   test('getWithMetadata-with', async () => {
-    const kv = new EdgeKVNamespace({foo: {value: 'abc', metadata: {m: 'n'}}})
+    const kv = new EdgeKVNamespace()
+    await kv.put('foo', 'abc', {metadata: {m: 'n'}})
     const v = await kv.getWithMetadata('foo')
     expect(v).toStrictEqual({value: 'abc', metadata: {m: 'n'}})
   })
 
   test('getWithMetadata-without', async () => {
-    const kv = new EdgeKVNamespace({foo: {value: 'abc'}})
+    const kv = new EdgeKVNamespace()
+    await kv.put('foo', 'abc')
     const v = await kv.getWithMetadata('foo')
     expect(v).toStrictEqual({value: 'abc', metadata: {}})
   })
 
   test('getWithMetadata-missing', async () => {
-    const kv = new EdgeKVNamespace({foo: {value: 'abc'}})
+    const kv = new EdgeKVNamespace()
+    await kv.put('foo', 'abc')
     const v = await kv.getWithMetadata('missing')
     expect(v).toStrictEqual({value: null, metadata: null})
   })
@@ -85,14 +92,16 @@ describe('EdgeKVNamespace', () => {
   })
 
   test('_clear', async () => {
-    const kv = new EdgeKVNamespace({foo: {value: 'Foo Value'}})
+    const kv = new EdgeKVNamespace()
+    await kv.put('foo', 'Foo Value')
     expect(await kv.get('foo')).toEqual('Foo Value')
     kv._clear()
     expect(await kv.get('foo')).toStrictEqual(null)
   })
 
   test('list', async () => {
-    const kv = new EdgeKVNamespace({foo: 'foobar', bar: 'spam'})
+    const kv = new EdgeKVNamespace()
+    await kv._putMany({foo: 'foobar', bar: 'spam'})
     expect(await kv.get('foo')).toEqual('foobar')
     expect(await kv.get('bar')).toEqual('spam')
     expect(await kv.list()).toStrictEqual({
@@ -107,7 +116,8 @@ describe('EdgeKVNamespace', () => {
   })
 
   test('list-limit', async () => {
-    const kv = new EdgeKVNamespace({foo: 'foobar', bar: 'spam'})
+    const kv = new EdgeKVNamespace()
+    await kv._putMany({foo: 'foobar', bar: 'spam'})
     expect(await kv.list({limit: 1})).toStrictEqual({
       keys: [{name: 'foo'}],
       list_complete: false,
@@ -116,7 +126,8 @@ describe('EdgeKVNamespace', () => {
   })
 
   test('list-metadata', async () => {
-    const kv = new EdgeKVNamespace({foo: 'foobar', bar: {value: 'spam', metadata: {apple: 'banana'}}})
+    const kv = new EdgeKVNamespace()
+    await kv._putMany({foo: 'foobar', bar: {value: 'spam', metadata: {apple: 'banana'}}})
     expect(await kv.get('foo')).toEqual('foobar')
     expect(await kv.get('bar')).toEqual('spam')
     expect(await kv.list()).toStrictEqual({
@@ -126,7 +137,8 @@ describe('EdgeKVNamespace', () => {
   })
 
   test('list-prefix', async () => {
-    const kv = new EdgeKVNamespace({foo: 'foobar', bar: 'spam'})
+    const kv = new EdgeKVNamespace()
+    await kv._putMany({foo: 'foobar', bar: 'spam'})
     expect(await kv.list({prefix: 'f'})).toStrictEqual({
       keys: [{name: 'foo'}],
       list_complete: true,
@@ -134,7 +146,8 @@ describe('EdgeKVNamespace', () => {
   })
 
   test('delete', async () => {
-    const kv = new EdgeKVNamespace({foo: 'foobar'})
+    const kv = new EdgeKVNamespace()
+    await kv.put('foo', 'foobar')
     expect(await kv.get('foo')).toEqual('foobar')
     await kv.delete('foo')
     expect(await kv.get('foo')).toStrictEqual(null)
@@ -154,7 +167,7 @@ describe('EdgeKVNamespace', () => {
     expect(content_ab).toBeInstanceOf(ArrayBuffer)
     expect(new Uint8Array(content_ab)[0]).toEqual(110)
 
-    expect(kv._manifest_json()).toEqual('{"workflows/ci.yml":"workflows/ci.yml"}')
+    expect(kv._manifestJson()).toEqual('{"workflows/ci.yml":"workflows/ci.yml"}')
   })
 
   test('_add_files-error', async () => {
