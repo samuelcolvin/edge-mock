@@ -1,5 +1,3 @@
-import {catUint8Arrays, decode, encode} from '../utils'
-
 export class EdgeReadableStream<R = string | Uint8Array | ArrayBuffer> implements ReadableStream {
   protected _locked = false
   protected _internal_iterator: IterableIterator<R>

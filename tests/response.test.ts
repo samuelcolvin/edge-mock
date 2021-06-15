@@ -1,5 +1,5 @@
 import {EdgeResponse, EdgeReadableStream, EdgeBlob} from '../src'
-import {rsToArrayBuffer, rsToString} from '../src/utils'
+import {rsToString} from '../src/utils'
 
 describe('EdgeResponse', () => {
   test('string', async () => {

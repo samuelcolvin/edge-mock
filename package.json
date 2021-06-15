@@ -48,11 +48,15 @@
     "globals": {
       "xhr_calls": true
     },
+    "plugins": [
+      "unused-imports"
+    ],
     "extends": [
       "typescript",
       "prettier"
     ],
     "rules": {
+      "unused-imports/no-unused-imports": "error",
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/explicit-module-boundary-types": "off",
       "@typescript-eslint/no-unused-vars": "off",
@@ -85,6 +89,7 @@
     "eslint": "^7.28.0",
     "eslint-config-prettier": "^8.1.0",
     "eslint-config-typescript": "^3.0.0",
+    "eslint-plugin-unused-imports": "^1.1.1",
     "jest": "^27.0.1",
     "jest-each": "^27.0.2",
     "prettier": "^2.3.0",

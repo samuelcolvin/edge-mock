@@ -1,4 +1,4 @@
-import {decode, bodyToArrayBuffer, getType, rsToString, rsToArrayBuffer} from '../utils'
+import {bodyToArrayBuffer, getType, rsToString, rsToArrayBuffer} from '../utils'
 import {EdgeReadableStream} from './ReadableStream'
 import {EdgeBlob} from './Blob'
 

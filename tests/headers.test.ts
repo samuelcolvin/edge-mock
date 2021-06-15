@@ -1,5 +1,4 @@
 import {EdgeHeaders} from '../src'
-import each from 'jest-each'
 
 describe('EdgeBlob', () => {
   test('object', async () => {
