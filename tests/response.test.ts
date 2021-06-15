@@ -6,6 +6,7 @@ describe('EdgeResponse', () => {
     const response = new EdgeResponse('abc')
     expect(response.status).toStrictEqual(200)
     expect(response.statusText).toStrictEqual('')
+    expect(response.type).toStrictEqual('default')
     expect(response.bodyUsed).toStrictEqual(false)
     expect(await response.text()).toEqual('abc')
     expect(response.bodyUsed).toStrictEqual(true)

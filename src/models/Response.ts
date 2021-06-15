@@ -10,11 +10,11 @@ export class EdgeResponse extends EdgeBody implements Response {
   readonly statusText: string
   readonly headers: Headers
   readonly redirected = false
-  readonly type: 'basic' | 'cors' = 'basic'
+  readonly type: ResponseType = 'default'
   readonly url: string
   readonly _extra?: any
 
-  constructor(body?: BodyInit | undefined | null, init: ResponseInit = {}, url = 'https://example.com', extra?: any) {
+  constructor(body?: BodyInit | null, init: ResponseInit = {}, url = 'https://example.com', extra?: any) {
     super(body)
     this.status = init.status === undefined ? 200 : init.status
     this.ok = this.status >= 200 && this.status < 300
