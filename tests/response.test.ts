@@ -4,6 +4,8 @@ import {rsToString} from '../src/utils'
 describe('EdgeResponse', () => {
   test('string', async () => {
     const response = new EdgeResponse('abc')
+    expect(response.status).toStrictEqual(200)
+    expect(response.statusText).toStrictEqual('')
     expect(response.bodyUsed).toStrictEqual(false)
     expect(await response.text()).toEqual('abc')
     expect(response.bodyUsed).toStrictEqual(true)
@@ -156,6 +158,7 @@ describe('EdgeResponse', () => {
     const r1 = new EdgeResponse('foobar', {status: 404})
     const r2 = r1.clone()
     expect(r1.status).toBe(404)
+    expect(r1.statusText).toStrictEqual('')
     expect(r2.status).toBe(404)
     expect(r1.body).not.toBeNull()
     expect(await r1.text()).toBe('foobar')

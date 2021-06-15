@@ -18,7 +18,7 @@ export class EdgeResponse extends EdgeBody implements Response {
     super(body)
     this.status = init.status === undefined ? 200 : init.status
     this.ok = this.status >= 200 && this.status < 300
-    this.statusText = init.statusText || 'OK'
+    this.statusText = init.statusText || ''
     this.headers = as_headers(init.headers)
     this.url = url
     if (extra) {
