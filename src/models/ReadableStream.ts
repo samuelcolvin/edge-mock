@@ -115,8 +115,7 @@ class StreamInternals<R> {
 
   async read(): Promise<ReadableStreamDefaultReadResult<R>> {
     if (this._done) {
-      // Error or done value?
-      throw new Error('stream done, should be this be a done value?')
+      return {done: true, value: undefined}
     }
     if (this._start_promise) {
       await this._start_promise
@@ -135,50 +134,45 @@ class StreamInternals<R> {
 
   tee(): [ReadableStream<R>, ReadableStream<R>] {
     this.acquireLock()
-    if (this._chunks.length) {
-      throw new Error('ReadableStream already started, tee() not available')
+    const chunks1: R[] = [...this._chunks]
+    const chunks2: R[] = [...this._chunks]
+    const start = async () => {
+      const p = this._start_promise
+      if (p) {
+        this._start_promise = null
+        await p
+      }
     }
-    const chunks2: R[] = []
-    const lock = new AsyncLock()
+    const pull = async (controller: ReadableStreamController<R>, chunks: R[]): Promise<void> => {
+      const {value} = await this.read()
+      if (value) {
+        chunks1.push(value)
+        chunks2.push(value)
+      }
+      const next = chunks.shift()
+      if (next == undefined) {
+        controller.close()
+      } else {
+        controller.enqueue(next)
+      }
+    }
+    const cancel = async (controller: ReadableStreamController<R>): Promise<void> => {
+      const c = this._source?.cancel
+      if (c) {
+        delete this._source?.cancel
+        await c(controller)
+      }
+    }
 
     const source1: UnderlyingSource<R> = {
-      start: async () => {
-        if (this._start_promise) {
-          await this._start_promise
-          this._start_promise = null
-        }
-      },
-      pull: async controller => {
-        const {value, done} = await this.read()
-        if (done) {
-          controller.close()
-        } else {
-          chunks2.push(value as any)
-          controller.enqueue(value as any)
-        }
-        lock.release(done)
-      },
-      cancel: controller => {
-        if (this._source?.cancel) {
-          return this._source.cancel(controller)
-        }
-      },
+      start: () => start(),
+      pull: controller => pull(controller, chunks1),
+      cancel: controller => cancel(controller),
     }
     const source2: UnderlyingSource<R> = {
-      pull: async controller => {
-        await lock.wait()
-        const value = chunks2.shift()
-        if (value == undefined) {
-          controller.close()
-        } else {
-          controller.enqueue(value)
-        }
-      },
-      cancel: controller => {
-        if (this._source?.cancel) {
-          return this._source.cancel(controller)
-        }
-      },
+      start: () => start(),
+      pull: controller => pull(controller, chunks2),
+      cancel: controller => cancel(controller),
     }
     return [new EdgeReadableStream(source1), new EdgeReadableStream(source2)]
   }
@@ -232,36 +226,5 @@ class EdgeReadableStreamDefaultReader<R> implements ReadableStreamDefaultReader 
 
   releaseLock(): void {
     this._internals.releaseLock()
-  }
-}
-
-class AsyncLock {
-  protected resolve: () => void = () => undefined
-  protected promise: Promise<void>
-  protected waiting = 0
-  protected finished = false
-
-  constructor() {
-    this.promise = new Promise(resolve => {
-      this.resolve = resolve
-    })
-  }
-
-  release(finished: boolean): void {
-    this.finished = this.finished || finished
-    if (this.waiting > 0) {
-      this.resolve()
-      this.promise = new Promise(resolve => {
-        this.resolve = resolve
-      })
-    }
-  }
-
-  async wait(): Promise<void> {
-    if (!this.finished) {
-      this.waiting++
-      await this.promise
-      this.waiting--
-    }
   }
 }
