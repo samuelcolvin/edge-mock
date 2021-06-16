@@ -1,6 +1,5 @@
 // https://developer.mozilla.org/en-US/docs/Web/API/Blob
-import {decode, catUint8Arrays, bodyToArrayBuffer} from '../utils'
-import {EdgeReadableStream} from './ReadableStream'
+import {decode, catUint8Arrays, bodyToArrayBuffer, rsFromArray} from '../utils'
 import {BlobOptions} from 'buffer'
 
 export class EdgeBlob implements Blob {
@@ -27,7 +26,7 @@ export class EdgeBlob implements Blob {
   }
 
   stream(): ReadableStream {
-    return new EdgeReadableStream([this._content])
+    return rsFromArray([this._content])
   }
 
   slice(start = 0, end: number | undefined = undefined, contentType?: string): Blob {

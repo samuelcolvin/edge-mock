@@ -1,5 +1,6 @@
 import {TextDecoder, TextEncoder} from 'util'
 import type {EdgeBlob} from './models'
+import {EdgeReadableStream} from './models'
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()
@@ -58,6 +59,21 @@ export async function rsToArrayBuffer(rs: ReadableStream): Promise<ArrayBuffer> 
       chunks.push(chunkToUInt(value))
     }
   }
+}
+
+export function rsFromArray<R = string | Uint8Array | ArrayBuffer>(array: R[]): ReadableStream {
+  const iterator = array[Symbol.iterator]()
+  return new EdgeReadableStream({
+    pull(controller) {
+      const {value, done} = iterator.next()
+
+      if (done) {
+        controller.close()
+      } else {
+        controller.enqueue(value)
+      }
+    },
+  })
 }
 
 function chunkToUInt(value: string | ArrayBuffer | Uint8Array): Uint8Array {

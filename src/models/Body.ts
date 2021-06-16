@@ -1,5 +1,4 @@
-import {bodyToArrayBuffer, getType, rsToString, rsToArrayBuffer} from '../utils'
-import {EdgeReadableStream} from './ReadableStream'
+import {bodyToArrayBuffer, getType, rsToString, rsToArrayBuffer, rsFromArray} from '../utils'
 import {EdgeBlob} from './Blob'
 
 const BodyTypes = new Set(['String', 'EdgeBlob', 'EdgeReadableStream', 'ArrayBuffer', 'Null', 'Undefined'])
@@ -18,7 +17,7 @@ export class EdgeBody implements Body {
       if (typeof content != 'string' && 'getReader' in content) {
         this._stream = content
       } else {
-        this._stream = new EdgeReadableStream([bodyToArrayBuffer(content)])
+        this._stream = rsFromArray([bodyToArrayBuffer(content)])
       }
     }
   }

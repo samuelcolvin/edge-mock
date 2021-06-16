@@ -1,9 +1,21 @@
 import {EdgeReadableStream} from '../src'
-import {rsToString} from '../src/utils'
+import {rsFromArray, rsToString} from '../src/utils'
 
 describe('EdgeKVNamespace', () => {
-  test('get_reader', async () => {
-    const stream = new EdgeReadableStream(['foo', 'bar'])
+  test('basic-string', async () => {
+    const iterator = ['foo', 'bar'][Symbol.iterator]()
+    const stream = new EdgeReadableStream({
+      async pull(controller) {
+        const {value, done} = await iterator.next()
+
+        if (done) {
+          controller.close()
+        } else {
+          controller.enqueue(value)
+        }
+      },
+    })
+
     expect(stream.locked).toBeFalsy()
     const reader = stream.getReader()
     expect(stream.locked).toBeTruthy()
@@ -24,7 +36,8 @@ describe('EdgeKVNamespace', () => {
   })
 
   test('get_reader-uint', async () => {
-    const stream = new EdgeReadableStream([new Uint8Array([97, 98]), new Uint8Array([100, 101])])
+    const stream = rsFromArray([new Uint8Array([97, 98]), new Uint8Array([100, 101])])
+    expect(stream).toBeInstanceOf(EdgeReadableStream)
     const reader = stream.getReader()
 
     expect(await reader.read()).toStrictEqual({done: false, value: new Uint8Array([97, 98])})
@@ -33,7 +46,7 @@ describe('EdgeKVNamespace', () => {
   })
 
   test('releaseLock', async () => {
-    const stream = new EdgeReadableStream(['foo', 'bar'])
+    const stream = new EdgeReadableStream({})
     expect(stream.locked).toBeFalsy()
     const reader = stream.getReader()
     expect(stream.locked).toBeTruthy()
@@ -42,13 +55,13 @@ describe('EdgeKVNamespace', () => {
   })
 
   test('get_reader-twice', async () => {
-    const stream = new EdgeReadableStream(['foo', 'bar'])
+    const stream = new EdgeReadableStream({})
     stream.getReader()
     expect(() => stream.getReader()).toThrow('ReadableStream already locked')
   })
 
   test('cancel', async () => {
-    const stream = new EdgeReadableStream(['foo', 'bar'])
+    const stream = rsFromArray(['foo', 'bar'])
     const reader = stream.getReader()
 
     let cancelled = false
@@ -62,7 +75,7 @@ describe('EdgeKVNamespace', () => {
   })
 
   test('tee', async () => {
-    const stream = new EdgeReadableStream(['foo', 'bar'])
+    const stream = rsFromArray(['foo', 'bar'])
     const [s1, s2] = stream.tee()
     expect(stream.locked).toBeTruthy()
     expect(s1.locked).toBeFalsy()
@@ -71,10 +84,10 @@ describe('EdgeKVNamespace', () => {
   })
 
   test('pipeThrough', async () => {
-    expect(new EdgeReadableStream(['foo', 'bar']).pipeThrough).toThrow('pipeThrough not yet implemented')
+    expect(new EdgeReadableStream({}).pipeThrough).toThrow('pipeThrough not yet implemented')
   })
 
   test('pipeTo', async () => {
-    expect(new EdgeReadableStream(['foo', 'bar']).pipeTo).toThrow('pipeTo not yet implemented')
+    expect(new EdgeReadableStream({}).pipeTo).toThrow('pipeTo not yet implemented')
   })
 })

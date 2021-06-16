@@ -2,7 +2,7 @@ export class EdgeReadableStream<R = string | Uint8Array | ArrayBuffer> implement
   protected readonly _internals: StreamInternals<R>
 
   constructor(underlyingSource?: UnderlyingSource<R>, strategy?: QueuingStrategy<R>) {
-    this._internals = new StreamInternals<R>(underlyingSource, strategy)
+    this._internals = new StreamInternals<R>(underlyingSource, strategy || {})
   }
 
   get locked(): boolean {
@@ -36,31 +36,35 @@ export class EdgeReadableStream<R = string | Uint8Array | ArrayBuffer> implement
 
 class StreamInternals<R> {
   protected readonly _source?: UnderlyingSource<R>
-  protected readonly _buffer: ReadableStreamDefaultReadResult<R>[]
+  protected readonly _chunks: R[]
   protected readonly _controller: EdgeReadableStreamDefaultController<R>
   protected readonly _on_done_resolvers: Set<BasicCallback> = new Set()
-  protected _open = false
+  protected _closed = false
+  protected _done = false
   protected _error: any = null
   protected _locked = false
   protected _start_promise: any = null
   protected _highWaterMark: number
 
-  constructor(source?: UnderlyingSource<R>, strategy?: QueuingStrategy<R>) {
+  constructor(source?: UnderlyingSource<R>, {highWaterMark, size}: QueuingStrategy<R> = {}) {
     this._source = source
-    // TODO error on source.type
-    this._highWaterMark = strategy?.highWaterMark || 10
-    if (strategy?.size) {
+    if (source?.type) {
+      throw new Error('UnderlyingSource.type is not yet supported')
+    }
+    this._highWaterMark = highWaterMark || 10
+    if (size) {
       throw new Error('TODO call size')
     }
-    this._buffer = []
+    this._chunks = []
     this._controller = new EdgeReadableStreamDefaultController<R>(this)
     if (this._source?.start) {
-      this._start_promise = this._source?.start(this._controller)
+      this._start_promise = this._source.start(this._controller)
     }
   }
 
   cancel(_reason?: string): Promise<void> {
-    this._buffer.length = 0
+    this._chunks.length = 0
+    this._closed = true
     if (this._source?.cancel) {
       this._source?.cancel(this._controller)
     }
@@ -86,14 +90,14 @@ class StreamInternals<R> {
   }
 
   close(): void {
-    this._open = false
+    this._closed = true
   }
 
   enqueue(chunk: R): void {
-    this._buffer.push({done: false, value: chunk})
+    this._chunks.push(chunk)
   }
 
-  onError(e?: any): void {
+  error(e?: any): void {
     this._error = e || true
   }
 
@@ -105,52 +109,78 @@ class StreamInternals<R> {
     for (const resolve of this._on_done_resolvers) {
       resolve()
     }
+    this._done = true
     return {done: true, value: undefined}
   }
 
   async read(): Promise<ReadableStreamDefaultReadResult<R>> {
-    if (!this._open) {
-      return this.done()
+    if (this._done) {
+      // Error or done value?
+      throw new Error('stream done, should be this be a done value?')
     }
     if (this._start_promise) {
       await this._start_promise
       this._start_promise = null
     }
-    const value = this._buffer.shift()
+    if (!this._closed && this._chunks.length < this._highWaterMark && this._source?.pull) {
+      await Promise.resolve(this._source.pull(this._controller))
+    }
+    const value = this._chunks.shift()
     if (value == undefined) {
       return this.done()
     } else {
-      return value
+      return {done: false, value}
     }
   }
 
   tee(): [ReadableStream<R>, ReadableStream<R>] {
     this.acquireLock()
-    const source: UnderlyingSource<R> = {
-      start: async (controller) => {
+    if (this._chunks.length) {
+      throw new Error('ReadableStream already started, tee() not available')
+    }
+    const chunks2: R[] = []
+    const lock = new AsyncLock()
+
+    const source1: UnderlyingSource<R> = {
+      start: async () => {
         if (this._start_promise) {
           await this._start_promise
           this._start_promise = null
         }
-        for (const chunk of this._buffer) {
-          const {done, value} = chunk
-          if (!done) {
-            controller.enqueue(value as R)
-          }
+      },
+      pull: async controller => {
+        const {value, done} = await this.read()
+        if (done) {
+          controller.close()
+        } else {
+          chunks2.push(value as any)
+          controller.enqueue(value as any)
+        }
+        lock.release(done)
+      },
+      cancel: controller => {
+        if (this._source?.cancel) {
+          return this._source.cancel(controller)
         }
       },
-      pull: controller => {
-        if (this._source?.pull) {
-          return this._source.pull(controller)
+    }
+    const source2: UnderlyingSource<R> = {
+      pull: async controller => {
+        await lock.wait()
+        const value = chunks2.shift()
+        if (value == undefined) {
+          controller.close()
+        } else {
+          controller.enqueue(value)
         }
       },
       cancel: controller => {
         if (this._source?.cancel) {
           return this._source.cancel(controller)
         }
-      }
+      },
     }
-    return [new EdgeReadableStream(source), new EdgeReadableStream(source)]
+    return [new EdgeReadableStream(source1), new EdgeReadableStream(source2)]
   }
 }
 
@@ -171,7 +201,7 @@ class EdgeReadableStreamDefaultController<R> implements ReadableStreamDefaultCon
   }
 
   error(e?: any): void {
-    this._internals.onError(e)
+    this._internals.error(e)
   }
 }
 
@@ -202,5 +232,36 @@ class EdgeReadableStreamDefaultReader<R> implements ReadableStreamDefaultReader 
 
   releaseLock(): void {
     this._internals.releaseLock()
+  }
+}
+
+class AsyncLock {
+  protected resolve: () => void = () => undefined
+  protected promise: Promise<void>
+  protected waiting = 0
+  protected finished = false
+
+  constructor() {
+    this.promise = new Promise(resolve => {
+      this.resolve = resolve
+    })
+  }
+
+  release(finished: boolean): void {
+    this.finished = this.finished || finished
+    if (this.waiting > 0) {
+      this.resolve()
+      this.promise = new Promise(resolve => {
+        this.resolve = resolve
+      })
+    }
+  }
+
+  async wait(): Promise<void> {
+    if (!this.finished) {
+      this.waiting++
+      await this.promise
+      this.waiting--
+    }
   }
 }
