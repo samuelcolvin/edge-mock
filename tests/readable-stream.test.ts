@@ -83,6 +83,13 @@ describe('EdgeKVNamespace', () => {
     expect(await rsToString(s2)).toEqual('foobar')
   })
 
+  // test('tee-reverse', async () => {
+  //   const stream = rsFromArray(['foo', 'bar'])
+  //   const [s1, s2] = stream.tee()
+  //   expect(await rsToString(s2)).toEqual('foobar')
+  //   expect(await rsToString(s1)).toEqual('foobar')
+  // })
+
   test('pipeThrough', async () => {
     expect(new EdgeReadableStream({}).pipeThrough).toThrow('pipeThrough not yet implemented')
   })
