@@ -25,10 +25,8 @@ export function catUint8Arrays(arrays: Uint8Array[]): Uint8Array {
 }
 
 // type BodyInit = Blob | BufferSource | FormData | URLSearchParams | ReadableStream<Uint8Array> | string;
-// BodyInit except ReadableStream, TODO: support FormData | URLSearchParams
-type BodyObj = Blob | BufferSource | FormData | URLSearchParams | string
 
-export function bodyToArrayBuffer(body: BodyObj): ArrayBuffer {
+export async function bodyToArrayBuffer(body: BodyInit): Promise<ArrayBuffer> {
   if (typeof body == 'string') {
     return encode(body).buffer
   } else if (body instanceof ArrayBuffer) {
@@ -36,10 +34,11 @@ export function bodyToArrayBuffer(body: BodyObj): ArrayBuffer {
   } else if ('buffer' in body) {
     return body.buffer
   } else if ('getReader' in body) {
-    throw new TypeError(`bodyToArrayBuffer cant handle ReadableStream's`)
+    return await rsToArrayBuffer(body)
+  } else if ('arrayBuffer' in body) {
+    return await body.arrayBuffer()
   } else {
-    const blob = body as EdgeBlob
-    return blob._content.buffer
+    throw new TypeError(`"${getType(body)}" not yet supported by bodyToArrayBuffer`)
   }
 }
 
@@ -84,7 +83,7 @@ function chunkToUInt(value: string | ArrayBuffer | Uint8Array): Uint8Array {
   } else if ('buffer' in value) {
     return value
   } else {
-    throw new TypeError(`Unexpected by "${getType(value)}", expected string, ArrayBuffer or Uint8Array`)
+    throw new TypeError(`Unexpected type "${getType(value)}", expected string, ArrayBuffer or Uint8Array`)
   }
 }
 
