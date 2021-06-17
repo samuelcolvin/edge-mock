@@ -3,7 +3,7 @@ import {EdgeBlob} from './Blob'
 import {EdgeReadableStream} from './ReadableStream'
 
 export class EdgeBody implements Body {
-  protected _stream: ReadableStream | null = null
+  protected _stream: ReadableStream<Uint8Array> | null = null
 
   constructor(content: BodyInit | null | undefined) {
     if (content) {
@@ -13,7 +13,7 @@ export class EdgeBody implements Body {
         this._stream = new EdgeReadableStream({
           async start(controller) {
             const abv = await bodyToArrayBufferView(content)
-            controller.enqueue(abv)
+            controller.enqueue(abv as Uint8Array)
           },
         })
       }
@@ -25,11 +25,7 @@ export class EdgeBody implements Body {
   }
 
   get bodyUsed(): boolean {
-    if (this._stream) {
-      return this._stream.locked
-    } else {
-      return false
-    }
+    return !!this._stream && this._stream.locked
   }
 
   async arrayBuffer(): Promise<ArrayBuffer> {
@@ -38,42 +34,39 @@ export class EdgeBody implements Body {
       const view = await rsToArrayBufferView(this._stream)
       return view.buffer
     } else {
-      return new Uint8Array([]).buffer
+      return new ArrayBuffer(0)
     }
   }
 
   async blob(): Promise<Blob> {
     this._check_used('blob')
+    let parts: ArrayBufferView[] = []
     if (this._stream) {
-      const ab = await rsToArrayBufferView(this._stream)
-      return new EdgeBlob([ab])
-    } else {
-      return new EdgeBlob([])
+      parts = [await rsToArrayBufferView(this._stream)]
     }
+    return new EdgeBlob(parts)
   }
 
   async json(): Promise<any> {
     this._check_used('json')
-    let text: string
-    if (this._stream) {
-      text = await rsToString(this._stream)
-    } else {
-      text = ''
-    }
-    return JSON.parse(text)
+    return JSON.parse(await this._text())
   }
 
   async text(): Promise<string> {
     this._check_used('text')
+    return await this._text()
+  }
+
+  async formData(): Promise<FormData> {
+    throw new Error('formData not implemented yet')
+  }
+
+  protected async _text(): Promise<string> {
     if (this._stream) {
       return await rsToString(this._stream)
     } else {
       return ''
     }
-  }
-
-  async formData(): Promise<FormData> {
-    throw new Error('formData not implemented yet')
   }
 
   protected _check_used(name: string): void {
@@ -84,8 +77,8 @@ export class EdgeBody implements Body {
 }
 
 // type BodyInit = Blob | BufferSource | FormData | URLSearchParams | ReadableStream<Uint8Array> | string;
-type BodyInit2 = Blob | BufferSource | FormData | URLSearchParams | string
-export async function bodyToArrayBufferView(body: BodyInit2): Promise<ArrayBufferView> {
+type BodyInitNotStream = Blob | BufferSource | FormData | URLSearchParams | string
+export async function bodyToArrayBufferView(body: BodyInitNotStream): Promise<ArrayBufferView> {
   if (typeof body == 'string') {
     return encode(body)
   } else if ('buffer' in body) {
