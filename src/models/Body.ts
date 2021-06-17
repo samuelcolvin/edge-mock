@@ -1,19 +1,11 @@
-import {getType, rsToString, rsToArrayBuffer, encode} from '../utils'
+import {getType, rsToString, rsToArrayBufferView, encode} from '../utils'
 import {EdgeBlob} from './Blob'
 import {EdgeReadableStream} from './ReadableStream'
-
-const BodyTypes = new Set(['String', 'EdgeBlob', 'EdgeReadableStream', 'ArrayBuffer', 'Null', 'Undefined'])
 
 export class EdgeBody implements Body {
   protected _stream: ReadableStream | null = null
 
   constructor(content: BodyInit | null | undefined) {
-    const body_type = getType(content)
-    if (!BodyTypes.has(body_type)) {
-      throw new TypeError(
-        `Invalid body type "${body_type}", must be one of: Blob, ArrayBuffer, ReadableStream, string, null or undefined`,
-      )
-    }
     if (content) {
       if (typeof content != 'string' && 'getReader' in content) {
         this._stream = content
@@ -43,7 +35,8 @@ export class EdgeBody implements Body {
   async arrayBuffer(): Promise<ArrayBuffer> {
     this._check_used('arrayBuffer')
     if (this._stream) {
-      return await rsToArrayBuffer(this._stream)
+      const view = await rsToArrayBufferView(this._stream)
+      return view.buffer
     } else {
       return new Uint8Array([]).buffer
     }
@@ -52,7 +45,7 @@ export class EdgeBody implements Body {
   async blob(): Promise<Blob> {
     this._check_used('blob')
     if (this._stream) {
-      const ab = await rsToArrayBuffer(this._stream)
+      const ab = await rsToArrayBufferView(this._stream)
       return new EdgeBlob([ab])
     } else {
       return new EdgeBlob([])
@@ -94,15 +87,15 @@ export class EdgeBody implements Body {
 export async function bodyToArrayBufferView(body: BodyInit): Promise<ArrayBufferView> {
   if (typeof body == 'string') {
     return encode(body)
-  } else if (body instanceof ArrayBuffer) {
-    return new Uint8Array(body)
   } else if ('buffer' in body) {
     return body
+  } else if ('byteLength' in body) {
+    return new Uint8Array(body)
   } else if ('getReader' in body) {
-    return new Uint8Array(await rsToArrayBuffer(body))
+    return await rsToArrayBufferView(body)
   } else if ('arrayBuffer' in body) {
     return new Uint8Array(await body.arrayBuffer())
   } else {
-    throw new TypeError(`"${getType(body)}" not yet supported by bodyToArrayBufferView`)
+    throw new TypeError(`${getType(body)}s are not supported as body types`)
   }
 }

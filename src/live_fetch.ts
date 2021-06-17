@@ -1,7 +1,7 @@
 import node_fetch, {BodyInit} from 'node-fetch'
 import {EdgeHeaders, EdgeResponse} from './models'
 import {check_method} from './models/Request'
-import {rsToArrayBuffer} from './utils'
+import {rsToArrayBufferView} from './utils'
 
 export default async function live_fetch(resource: string | URL, init: RequestInit | Request = {}): Promise<Response> {
   let headers: Record<string, string> | undefined = undefined
@@ -20,7 +20,7 @@ export default async function live_fetch(resource: string | URL, init: RequestIn
       // Blob
       body = await init_body.arrayBuffer()
     } else if ('getReader' in init_body) {
-      body = await rsToArrayBuffer(init_body)
+      body = await rsToArrayBufferView(init_body)
     } else {
       // TODO this is a bodge until all cases can be checked
       body = init_body as any

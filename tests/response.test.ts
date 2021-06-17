@@ -56,12 +56,8 @@ describe('EdgeResponse', () => {
 
   test('invalid-body', async () => {
     const d = new Date() as any
-    const t = () => new EdgeResponse(d)
-    expect(t).toThrow(
-      new TypeError(
-        'Invalid body type "Date", must be one of: Blob, ArrayBuffer, ReadableStream, string, null or undefined',
-      ),
-    )
+    const r = new EdgeResponse(d)
+    await expect(r.text()).rejects.toThrow('Dates are not supported as body types')
   })
 
   test('body', async () => {

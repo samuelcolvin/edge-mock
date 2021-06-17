@@ -2,7 +2,7 @@
 // TODO expiration
 import fs from 'fs'
 import path from 'path'
-import {encode, decode, escape_regex, rsToArrayBuffer, rsFromArray} from './utils'
+import {encode, decode, escape_regex, rsToArrayBufferView, rsFromArray} from './utils'
 
 type InputValueValue = string | ArrayBuffer | ReadableStream | Buffer
 interface InputObject {
@@ -62,7 +62,8 @@ export class EdgeKVNamespace implements KVNamespace {
     } else if (Buffer.isBuffer(value)) {
       _value = value.buffer
     } else if ('getReader' in value) {
-      _value = await rsToArrayBuffer(value)
+      const view = await rsToArrayBufferView(value)
+      _value = view.buffer
     } else {
       _value = value
     }

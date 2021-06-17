@@ -1,5 +1,5 @@
 // https://developer.mozilla.org/en-US/docs/Web/API/Blob
-import {encode, decode, catUint8Arrays} from '../utils'
+import {encode, decode, catArraysBufferViews} from '../utils'
 import {BlobOptions} from 'buffer'
 import {EdgeReadableStream} from './ReadableStream'
 
@@ -34,7 +34,7 @@ export class EdgeBlob implements Blob {
 
   async arrayBuffer(): Promise<ArrayBuffer> {
     const buffers_views = await Promise.all(this._parts.map(partToArrayBufferView))
-    return catUint8Arrays(buffers_views).buffer
+    return catArraysBufferViews(buffers_views).buffer
   }
 
   stream(): ReadableStream {
@@ -72,21 +72,19 @@ export class EdgeBlob implements Blob {
       if (end <= offset) {
         break
       }
-      let part_array: Uint8Array | Blob
+      let part_array: Uint8Array | ArrayBuffer | Blob
       let part_size: number
       if (typeof part == 'string') {
         part_array = encode(part)
-        part_size = part_array.byteLength
-      } else if (part instanceof ArrayBuffer) {
-        part_array = new Uint8Array(part)
         part_size = part_array.byteLength
       } else if ('arrayBuffer' in part) {
         part_array = part
         part_size = part_array.size
       } else {
-        part_array = part as Uint8Array
+        part_array = part as Uint8Array | ArrayBuffer
         part_size = part_array.byteLength
       }
+
       if (start < offset + part_size) {
         new_parts.push(part_array.slice(Math.max(0, start - offset), end - offset))
       }
@@ -99,11 +97,11 @@ export class EdgeBlob implements Blob {
 async function partToArrayBufferView(part: BlobPart): Promise<ArrayBufferView> {
   if (typeof part == 'string') {
     return encode(part)
-  } else if (part instanceof ArrayBuffer) {
-    return new Uint8Array(part)
-  } else if ('arrayBuffer' in part) {
-    return new Uint8Array(await part.arrayBuffer())
-  } else {
+  } else if ('buffer' in part) {
     return part
+  } else if ('byteLength' in part) {
+    return new Uint8Array(part)
+  } else {
+    return new Uint8Array(await part.arrayBuffer())
   }
 }

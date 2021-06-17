@@ -4,10 +4,10 @@ import {check_method} from './models/Request'
 export default async function stub_fetch(resource: string | URL, init: RequestInit | Request = {}): Promise<Response> {
   const method = check_method(init.method)
   let url: URL
-  if (resource instanceof URL) {
-    url = resource
-  } else {
+  if (typeof resource == 'string') {
     url = new URL(resource)
+  } else {
+    url = resource
   }
   if (url.href == 'https://example.com/') {
     return new EdgeResponse(
