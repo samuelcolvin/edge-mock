@@ -28,4 +28,33 @@ describe('Request', () => {
     expect(request.bodyUsed).toStrictEqual(true)
     expect(buffer_view).toEqual(body)
   })
+
+  test('from-request', async () => {
+    const r1 = new EdgeRequest('https://www.example.com', {method: 'POST', body: 'test'})
+    const r2 = new EdgeRequest(r1)
+    expect(r2.method).toEqual('POST')
+    expect(await r2.text()).toEqual('test')
+  })
+
+  test('bad-method', async () => {
+    const init = {method: 'FOOBAR'} as any
+    expect(() => new EdgeRequest('/', init)).toThrow('"FOOBAR" is not a valid request method')
+  })
+
+  test('signal', async () => {
+    const r1 = new EdgeRequest('https://www.example.com', {method: 'POST', body: 'test'})
+    expect(() => r1.signal).toThrow('signal not yet implemented')
+  })
+
+  test('clone', async () => {
+    const r1 = new EdgeRequest('https://www.example.com', {method: 'POST', body: 'test'})
+    const r2 = r1.clone()
+    expect(r2.method).toEqual('POST')
+    expect(await r2.text()).toEqual('test')
+  })
+
+  test('get-body', async () => {
+    const init = {method: 'FOOBAR'} as any
+    expect(() => new EdgeRequest('/', {body: 'xx'})).toThrow('Request with GET/HEAD method cannot have body.')
+  })
 })

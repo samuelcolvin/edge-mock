@@ -28,12 +28,6 @@ export class EdgeRequest extends EdgeBody implements Request {
   readonly referrerPolicy: ReferrerPolicy = ''
 
   constructor(input: RequestInfo, init?: RequestInit) {
-    const method = check_method(init?.method)
-    if (init?.body && (method == 'GET' || method == 'HEAD')) {
-      throw new TypeError("Failed to construct 'Request': Request with GET/HEAD method cannot have body.")
-    }
-    super(init?.body)
-
     let url: string
     if (typeof input == 'string') {
       url = input || '/'
@@ -49,6 +43,13 @@ export class EdgeRequest extends EdgeBody implements Request {
         ...init,
       }
     }
+
+    const method = check_method(init?.method)
+    if (init?.body && (method == 'GET' || method == 'HEAD')) {
+      throw new TypeError('Request with GET/HEAD method cannot have body.')
+    }
+
+    super(init?.body)
     this.url = 'https://example.com' + url
     this.method = method
     this.mode = init?.mode || 'same-origin'
@@ -69,7 +70,8 @@ export class EdgeRequest extends EdgeBody implements Request {
 
   clone(): Request {
     this._check_used('clone')
-    return new Request(this.url, {
+    const constructor = this.constructor as typeof EdgeRequest
+    return new constructor(this.url, {
       method: this.method,
       headers: this.headers,
       body: this.body,
@@ -91,7 +93,7 @@ export function check_method(m?: string): Method {
   }
   const method = m.toUpperCase()
   if (!MethodsSet.has(method)) {
-    throw new TypeError(`"${m}" is not a valid method, should be one of: ${MethodStrings}`)
+    throw new TypeError(`"${m}" is not a valid request method`)
   }
   return method as Method
 }
