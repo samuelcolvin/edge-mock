@@ -63,10 +63,17 @@ describe('live_fetch', () => {
     expect(obj.data).toEqual('foobar')
   })
 
-  test('request', async () => {
-    const body = new Uint8Array([100, 101, 102])
-    const request = new EdgeRequest('https://www.example.com', {method: 'POST', body: body.buffer})
+  test('existing-request', async () => {
+    const request = new EdgeRequest('https://www.example.com', {method: 'POST', body: 'abc'})
     const r = await live_fetch('https://httpbin.org/post', request)
+    expect(r.status).toEqual(200)
+    const obj = await r.json()
+    expect(obj.data).toEqual('abc')
+  })
+
+  test('post-buffer', async () => {
+    const body = new Uint8Array([100, 101, 102])
+    const r = await live_fetch('https://httpbin.org/post', {method: 'POST', body})
     expect(r.status).toEqual(200)
     const obj = await r.json()
     expect(obj.data).toEqual('def')

@@ -19,7 +19,7 @@
   "scripts": {
     "prepublishOnly": "tsc -b tsconfig.build.json",
     "postpublish": "make clean",
-    "format": "prettier --write '**/*.{json,js,ts,toml}'",
+    "format": "prettier --write '**/*.{json,js,ts}'",
     "lint": "eslint --max-warnings=0 src tests && prettier --check '**/*.{json,js,ts}'",
     "test": "jest --verbose",
     "all": "yarn lint && yarn test"
@@ -67,8 +67,7 @@
     "testRegex": "/tests/.*\\.test\\.ts$",
     "collectCoverageFrom": [
       "src/**/*.ts",
-      "!src/server.ts",
-      "!src/live_fetch.ts"
+      "!src/server.ts"
     ],
     "preset": "ts-jest"
   },

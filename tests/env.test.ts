@@ -33,12 +33,21 @@ describe('makeEdgeEnv', () => {
         request: {
           method: 'POST',
           url: 'https://example.com/bar/',
-          headers: {
-            accept: '*/*',
-          },
+          headers: {accept: '*/*'},
           body: 'testing',
         },
       },
     })
+  })
+
+  test('wrong-event-type', async () => {
+    makeEdgeEnv()
+    expect(() => addEventListener('foobar', null as any)).toThrow('only "fetch" events are supported, not "foobar"')
+  })
+
+  test('dispatch-no-listener', async () => {
+    const env = makeEdgeEnv()
+    const event = new FetchEvent('fetch', {request: new Request('/bar/')})
+    expect(() => env.dispatchEvent(event)).toThrow('no event listener added')
   })
 })
