@@ -15,8 +15,6 @@ const port = 3000
 
 declare const global: any
 
-// require('https').globalAgent.options.ca = require('ssl-root-cas/latest').create()
-
 const kv_namespace = new EdgeKVNamespace()
 
 const global_extra = {
@@ -34,7 +32,7 @@ import(webpack_config).then(wp_config => {
       delete require.cache[require.resolve(dist_path)]
 
       kv_namespace._add_files(dist_assets_path, prepare_key).then(() => {
-        global.__STATIC_CONTENT_MANIFEST = kv_namespace._manifest_json()
+        global.__STATIC_CONTENT_MANIFEST = kv_namespace._manifestJson()
         import(dist_path)
       })
     }

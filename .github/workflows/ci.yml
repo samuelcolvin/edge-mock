@@ -36,3 +36,4 @@ jobs:
 
     - run: yarn
     - run: yarn lint
+    - run: yarn prepublishOnly
