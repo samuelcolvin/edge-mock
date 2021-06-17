@@ -1,5 +1,5 @@
 import {EdgeKVNamespace, EdgeReadableStream} from '../src'
-import {rsToString} from '../src/utils'
+import {rsFromArray, rsToString} from '../src/utils'
 
 describe('EdgeKVNamespace', () => {
   test('get-value', async () => {
@@ -85,7 +85,7 @@ describe('EdgeKVNamespace', () => {
 
   test('put-stream', async () => {
     const kv = new EdgeKVNamespace()
-    const stream = new EdgeReadableStream(['a', 'b', 'cde'])
+    const stream = rsFromArray(['a', 'b', 'cde'])
     await kv.put('foo', stream)
     expect(await kv.get('foo')).toEqual('abcde')
     expect(await kv.get('foo')).toEqual('abcde')

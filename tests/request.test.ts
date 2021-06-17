@@ -1,5 +1,5 @@
 import {EdgeReadableStream, EdgeRequest} from '../src'
-import {rsToArrayBuffer} from '../src/utils'
+import {rsToArrayBufferView} from '../src/utils'
 
 describe('Request', () => {
   test('construct', async () => {
@@ -24,8 +24,8 @@ describe('Request', () => {
     const stream = request.body
     expect(stream).toBeInstanceOf(EdgeReadableStream)
     expect(request.bodyUsed).toStrictEqual(false)
-    const buffer = await rsToArrayBuffer(stream as ReadableStream)
+    const buffer_view = await rsToArrayBufferView(stream as ReadableStream)
     expect(request.bodyUsed).toStrictEqual(true)
-    expect(new Uint8Array(buffer)).toEqual(body)
+    expect(buffer_view).toEqual(body)
   })
 })

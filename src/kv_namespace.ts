@@ -2,8 +2,7 @@
 // TODO expiration
 import fs from 'fs'
 import path from 'path'
-import {encode, decode, escape_regex, rsToArrayBuffer} from './utils'
-import {EdgeReadableStream} from './models'
+import {encode, decode, escape_regex, rsToArrayBufferView, rsFromArray} from './utils'
 
 type InputValueValue = string | ArrayBuffer | ReadableStream | Buffer
 interface InputObject {
@@ -63,7 +62,8 @@ export class EdgeKVNamespace implements KVNamespace {
     } else if (Buffer.isBuffer(value)) {
       _value = value.buffer
     } else if ('getReader' in value) {
-      _value = await rsToArrayBuffer(value)
+      const view = await rsToArrayBufferView(value)
+      _value = view.buffer
     } else {
       _value = value
     }
@@ -168,7 +168,7 @@ function prepare_value(v: ArrayBuffer, type: ValueTypeNames | undefined): any {
     case 'json':
       return JSON.parse(decode(v))
     case 'stream':
-      return new EdgeReadableStream([new Uint8Array(v)])
+      return rsFromArray([new Uint8Array(v)])
     default:
       return decode(v)
   }

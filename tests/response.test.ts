@@ -1,5 +1,5 @@
 import {EdgeResponse, EdgeReadableStream, EdgeBlob} from '../src'
-import {rsToString} from '../src/utils'
+import {rsFromArray, rsToString} from '../src/utils'
 
 describe('EdgeResponse', () => {
   test('string', async () => {
@@ -41,14 +41,14 @@ describe('EdgeResponse', () => {
 
   test('stream-string', async () => {
     const chunks = [new Uint8Array([97, 98]), new Uint8Array([100, 101])]
-    const stream = new EdgeReadableStream(chunks)
+    const stream = rsFromArray(chunks)
     const response = new EdgeResponse(stream)
     expect(await response.text()).toEqual('abde')
   })
 
   test('stream-array-buffer', async () => {
     const chunks = [new Uint8Array([97, 98]), new Uint8Array([100, 101])]
-    const stream = new EdgeReadableStream(chunks)
+    const stream = rsFromArray(chunks)
     const response = new EdgeResponse(stream)
     const buffer = await response.arrayBuffer()
     expect(new Uint8Array(buffer)).toEqual(new Uint8Array([97, 98, 100, 101]))
@@ -56,12 +56,8 @@ describe('EdgeResponse', () => {
 
   test('invalid-body', async () => {
     const d = new Date() as any
-    const t = () => new EdgeResponse(d)
-    expect(t).toThrow(
-      new TypeError(
-        'Invalid body type "Date", must be one of: Blob, ArrayBuffer, ReadableStream, string, null or undefined',
-      ),
-    )
+    const r = new EdgeResponse(d)
+    await expect(r.text()).rejects.toThrow('Dates are not supported as body types')
   })
 
   test('body', async () => {
