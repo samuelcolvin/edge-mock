@@ -90,6 +90,70 @@ describe('EdgeKVNamespace', () => {
     expect(await rsToString(s1)).toEqual('foobar')
   })
 
+  test('tee-cancel', async () => {
+    const iterator = ['foo', 'bar', 'spam'][Symbol.iterator]()
+    let cancelled = false
+    const stream = new EdgeReadableStream({
+      async pull(controller) {
+        const {value, done} = await iterator.next()
+        if (done) {
+          controller.close()
+        } else {
+          controller.enqueue(value)
+        }
+      },
+      cancel() {
+        cancelled = true
+      },
+    })
+
+    const [s1, s2] = stream.tee()
+    const r1 = s1.getReader()
+    expect(await r1.read()).toStrictEqual({done: false, value: 'foo'})
+    expect(cancelled).toBeFalsy()
+    const cancel_promise = r1.cancel()
+    expect(await r1.read()).toStrictEqual({done: true, value: undefined})
+    expect(cancelled).toBeTruthy()
+    expect(await cancel_promise).toBeUndefined()
+    const r2 = s2.getReader()
+    expect(await r2.read()).toStrictEqual({done: false, value: 'foo'})
+    expect(await r2.read()).toStrictEqual({done: true, value: undefined})
+  })
+
+  test('controller-cancel', async () => {
+    const iterator = ['foo', 'bar', 'spam'][Symbol.iterator]()
+    const stream = new EdgeReadableStream({
+      async pull(controller) {
+        const {value, done} = await iterator.next()
+
+        if (done) {
+          controller.close()
+        } else {
+          if (value == 'bar') {
+            controller.error(new Error('this is an error'))
+          }
+          controller.enqueue(value)
+        }
+      },
+    })
+
+    const reader = stream.getReader()
+
+    await expect(reader.read()).resolves.toStrictEqual({done: false, value: 'foo'})
+    await expect(reader.read()).resolves.toStrictEqual({done: false, value: 'bar'})
+    await expect(reader.read()).rejects.toThrow('this is an error')
+  })
+
+  test('source-type', async () => {
+    const s = {type: 'bytes'} as any
+    expect(() => new EdgeReadableStream(s)).toThrow('UnderlyingSource.type is not yet supported')
+  })
+
+  test('reader-type', async () => {
+    const stream = new EdgeReadableStream()
+    expect(() => stream.getReader({mode: 'byob'})).toThrow('ReadableStream modes other than default are not supported')
+  })
+
   test('pipeThrough', async () => {
     expect(new EdgeReadableStream({}).pipeThrough).toThrow('pipeThrough not yet implemented')
   })

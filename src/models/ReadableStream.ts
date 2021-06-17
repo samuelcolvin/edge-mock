@@ -122,7 +122,11 @@ class StreamInternals<R> {
       this._start_promise = null
     }
     if (!this._closed && this._chunks.length < this._highWaterMark && this._source?.pull) {
-      await Promise.resolve(this._source.pull(this._controller))
+      if (this._error) {
+        throw this._error
+      } else {
+        await Promise.resolve(this._source.pull(this._controller))
+      }
     }
     const value = this._chunks.shift()
     if (value == undefined) {
@@ -143,12 +147,13 @@ class StreamInternals<R> {
         await p
       }
     }
-    const pull = async (controller: ReadableStreamController<R>, chunks: R[]): Promise<void> => {
+    const pull = async (controller: ReadableStreamController<R>, which: 1 | 2): Promise<void> => {
       const {value} = await this.read()
       if (value) {
         chunks1.push(value)
         chunks2.push(value)
       }
+      const chunks = which == 1 ? chunks1 : chunks2
       const next = chunks.shift()
       if (next == undefined) {
         controller.close()
@@ -157,6 +162,7 @@ class StreamInternals<R> {
       }
     }
     const cancel = async (controller: ReadableStreamController<R>): Promise<void> => {
+      this.cancel()
       const c = this._source?.cancel
       if (c) {
         delete this._source?.cancel
@@ -166,12 +172,12 @@ class StreamInternals<R> {
 
     const source1: UnderlyingSource<R> = {
       start: () => start(),
-      pull: controller => pull(controller, chunks1),
+      pull: controller => pull(controller, 1),
       cancel: controller => cancel(controller),
     }
     const source2: UnderlyingSource<R> = {
       start: () => start(),
-      pull: controller => pull(controller, chunks2),
+      pull: controller => pull(controller, 2),
       cancel: controller => cancel(controller),
     }
     return [new EdgeReadableStream(source1), new EdgeReadableStream(source2)]
