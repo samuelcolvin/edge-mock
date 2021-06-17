@@ -9,6 +9,7 @@ describe('Request', () => {
     expect(Object.fromEntries(request.headers.entries())).toStrictEqual({
       accept: '*/*',
     })
+    expect(request.cf.colo).toEqual('EWR')
   })
 
   test('body-buffer', async () => {
@@ -47,10 +48,13 @@ describe('Request', () => {
   })
 
   test('clone', async () => {
-    const r1 = new EdgeRequest('https://www.example.com', {method: 'POST', body: 'test'})
+    const init = {method: 'POST', body: 'test', cf: {colo: 'ABC'}} as any
+    const r1 = new EdgeRequest('https://www.example.com', init)
+    expect(r1.cf.colo).toEqual('ABC')
     const r2 = r1.clone()
     expect(r2.method).toEqual('POST')
     expect(await r2.text()).toEqual('test')
+    expect(r2.cf.colo).toEqual('ABC')
   })
 
   test('get-body', async () => {

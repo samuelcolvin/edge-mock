@@ -1,4 +1,4 @@
-export function example_cf(): IncomingRequestCfProperties {
+export function example_cf(custom: Partial<IncomingRequestCfProperties> | undefined): IncomingRequestCfProperties {
   return {
     asn: 9009,
     city: 'New York',
@@ -44,5 +44,6 @@ export function example_cf(): IncomingRequestCfProperties {
       serverHandshake: '0f186e19f0a82',
     },
     tlsVersion: 'TLSv1.3',
+    ...custom,
   } as IncomingRequestCfProperties
 }

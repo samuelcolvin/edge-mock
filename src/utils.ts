@@ -38,7 +38,7 @@ export async function rsToArrayBufferView(rs: ReadableStream): Promise<ArrayBuff
   }
 }
 
-export function rsFromArray<R = string | Uint8Array | ArrayBuffer>(array: R[]): ReadableStream {
+export function rsFromArray<R = string | Uint8Array | ArrayBuffer>(array: R[]): ReadableStream<R> {
   const iterator = array[Symbol.iterator]()
   return new EdgeReadableStream({
     pull(controller) {

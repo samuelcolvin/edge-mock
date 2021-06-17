@@ -40,6 +40,7 @@ export class EdgeRequest extends EdgeBody implements Request {
         method: input.method,
         mode: input.mode,
         referrer: input.referrer,
+        cf: input.cf,
         ...init,
       }
     }
@@ -59,7 +60,7 @@ export class EdgeRequest extends EdgeBody implements Request {
     this.credentials = init?.credentials || (this.mode === 'navigate' ? 'include' : 'omit')
     this.redirect = init?.redirect || 'follow'
     this.integrity = init?.integrity || '-'
-    this.cf = example_cf()
+    this.cf = example_cf(init?.cf as any)
 
     this.headers = as_headers(init?.headers, DEFAULT_HEADERS)
   }
@@ -81,6 +82,7 @@ export class EdgeRequest extends EdgeBody implements Request {
       redirect: this.redirect,
       referrer: this.referrer,
       integrity: this.integrity,
+      cf: this.cf,
     })
   }
 }

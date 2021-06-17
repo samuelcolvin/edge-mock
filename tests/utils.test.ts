@@ -1,5 +1,5 @@
 import each from 'jest-each'
-import {EdgeBlob} from '../src'
+import {EdgeBlob, EdgeRequest} from '../src'
 import {getType} from '../src/utils'
 
 interface TestType {
@@ -7,14 +7,18 @@ interface TestType {
   expected: string
 }
 const types: TestType[] = [
-  {input: [1, 2, 3], expected: 'Array'},
-  {input: new EdgeBlob(['a']), expected: 'EdgeBlob'},
   {input: null, expected: 'Null'},
   {input: undefined, expected: 'Undefined'},
+  {input: false, expected: 'Boolean'},
+  {input: 123, expected: 'Number'},
+  {input: '123', expected: 'String'},
+  {input: [1, 2, 3], expected: 'Array'},
+  {input: new EdgeBlob(['a']), expected: 'EdgeBlob'},
+  {input: new EdgeRequest(''), expected: 'EdgeRequest'},
 ]
 
 describe('getType', () => {
-  each(types).test('types %O', async ({input, expected}: TestType) => {
+  each(types).test('types %p', async ({input, expected}: TestType) => {
     expect(getType(input)).toEqual(expected)
   })
 })
