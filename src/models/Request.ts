@@ -27,40 +27,40 @@ export class EdgeRequest extends EdgeBody implements Request {
   readonly keepalive = false
   readonly referrerPolicy: ReferrerPolicy = ''
 
-  constructor(urlOrRequest: string | Request, init: RequestInit = {}) {
-    const method = check_method(init.method)
-    if (init.body && (method == 'GET' || method == 'HEAD')) {
+  constructor(input: RequestInfo, init?: RequestInit) {
+    const method = check_method(init?.method)
+    if (init?.body && (method == 'GET' || method == 'HEAD')) {
       throw new TypeError("Failed to construct 'Request': Request with GET/HEAD method cannot have body.")
     }
-    super(init.body)
+    super(init?.body)
 
     let url: string
-    if (urlOrRequest instanceof EdgeRequest) {
-      url = urlOrRequest.url
+    if (typeof input == 'string') {
+      url = input || '/'
+    } else {
+      url = input.url
       init = {
-        body: urlOrRequest.body,
-        credentials: urlOrRequest.credentials,
-        headers: urlOrRequest.headers,
-        method: urlOrRequest.method,
-        mode: urlOrRequest.mode,
-        referrer: urlOrRequest.referrer,
+        body: input.body,
+        credentials: input.credentials,
+        headers: input.headers,
+        method: input.method,
+        mode: input.mode,
+        referrer: input.referrer,
         ...init,
       }
-    } else {
-      url = (urlOrRequest as string) || '/'
     }
     this.url = 'https://example.com' + url
     this.method = method
-    this.mode = init.mode || 'same-origin'
-    this.cache = init.cache || 'default'
-    this.referrer = init.referrer && init.referrer !== 'no-referrer' ? init.referrer : ''
+    this.mode = init?.mode || 'same-origin'
+    this.cache = init?.cache || 'default'
+    this.referrer = init?.referrer && init?.referrer !== 'no-referrer' ? init?.referrer : ''
     // See https://fetch.spec.whatwg.org/#concept-request-credentials-mode
-    this.credentials = init.credentials || (this.mode === 'navigate' ? 'include' : 'omit')
-    this.redirect = init.redirect || 'follow'
-    this.integrity = init.integrity || '-'
+    this.credentials = init?.credentials || (this.mode === 'navigate' ? 'include' : 'omit')
+    this.redirect = init?.redirect || 'follow'
+    this.integrity = init?.integrity || '-'
     this.cf = example_cf()
 
-    this.headers = as_headers(init.headers, DEFAULT_HEADERS)
+    this.headers = as_headers(init?.headers, DEFAULT_HEADERS)
   }
 
   get signal(): AbortSignal {

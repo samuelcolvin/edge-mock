@@ -3,13 +3,13 @@
 export class EdgeHeaders implements Headers {
   protected readonly map: Map<string, string>
 
-  constructor(init: Map<string, string> | Headers | Record<string, string> | string[][] = {}) {
+  constructor(init: HeadersInit | Map<string, string> = {}) {
     if (init instanceof EdgeHeaders) {
       this.map = new Map(init.entries())
     } else {
       let a: [string, string][]
       if (init instanceof Map) {
-        a = [...init.entries()]
+        a = [...init]
       } else if (Array.isArray(init)) {
         a = init as [string, string][]
       } else {
