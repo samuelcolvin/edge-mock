@@ -1,5 +1,4 @@
 import {TextDecoder, TextEncoder} from 'util'
-import type {EdgeBlob} from './models'
 import {EdgeReadableStream} from './models'
 
 const encoder = new TextEncoder()
@@ -13,33 +12,15 @@ export function decode(input: Uint8Array | ArrayBuffer): string {
   return decoder.decode(input)
 }
 
-export function catUint8Arrays(arrays: Uint8Array[]): Uint8Array {
-  const total_length = arrays.reduce((length: number, a: Uint8Array) => length + a.length, 0)
-  const combinedArray = new Uint8Array(total_length)
+export function catUint8Arrays(arrays: ArrayBufferView[]): Uint8Array {
+  const byteLength = arrays.reduce((byteLength, a) => byteLength + a.byteLength, 0)
+  const combinedArray = new Uint8Array(byteLength)
   let pos = 0
   for (const a of arrays) {
-    combinedArray.set(a, pos)
-    pos += a.length
+    combinedArray.set(a as Uint8Array, pos)
+    pos += a.byteLength
   }
   return combinedArray
-}
-
-// type BodyInit = Blob | BufferSource | FormData | URLSearchParams | ReadableStream<Uint8Array> | string;
-
-export async function bodyToArrayBuffer(body: BodyInit): Promise<ArrayBuffer> {
-  if (typeof body == 'string') {
-    return encode(body).buffer
-  } else if (body instanceof ArrayBuffer) {
-    return body
-  } else if ('buffer' in body) {
-    return body.buffer
-  } else if ('getReader' in body) {
-    return await rsToArrayBuffer(body)
-  } else if ('arrayBuffer' in body) {
-    return await body.arrayBuffer()
-  } else {
-    throw new TypeError(`"${getType(body)}" not yet supported by bodyToArrayBuffer`)
-  }
 }
 
 export async function rsToString(rs: ReadableStream): Promise<string> {
@@ -47,6 +28,7 @@ export async function rsToString(rs: ReadableStream): Promise<string> {
   return decode(ab)
 }
 
+// TODO change to arraybuffer view
 export async function rsToArrayBuffer(rs: ReadableStream): Promise<ArrayBuffer> {
   const reader = rs.getReader()
   const chunks: Uint8Array[] = []

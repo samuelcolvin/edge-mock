@@ -1,5 +1,6 @@
-import {bodyToArrayBuffer, getType, rsToString, rsToArrayBuffer, rsFromArray} from '../utils'
+import {getType, rsToString, rsToArrayBuffer, encode} from '../utils'
 import {EdgeBlob} from './Blob'
+import {EdgeReadableStream} from './ReadableStream'
 
 const BodyTypes = new Set(['String', 'EdgeBlob', 'EdgeReadableStream', 'ArrayBuffer', 'Null', 'Undefined'])
 
@@ -17,7 +18,12 @@ export class EdgeBody implements Body {
       if (typeof content != 'string' && 'getReader' in content) {
         this._stream = content
       } else {
-        this._stream = rsFromArray([bodyToArrayBuffer(content)])
+        this._stream = new EdgeReadableStream({
+          async start(controller) {
+            const abv = await bodyToArrayBufferView(content)
+            controller.enqueue(abv)
+          },
+        })
       }
     }
   }
@@ -81,5 +87,22 @@ export class EdgeBody implements Body {
     if (this._stream?.locked) {
       throw new Error(`Failed to execute "${name}": body is already used`)
     }
+  }
+}
+
+// type BodyInit = Blob | BufferSource | FormData | URLSearchParams | ReadableStream<Uint8Array> | string;
+export async function bodyToArrayBufferView(body: BodyInit): Promise<ArrayBufferView> {
+  if (typeof body == 'string') {
+    return encode(body)
+  } else if (body instanceof ArrayBuffer) {
+    return new Uint8Array(body)
+  } else if ('buffer' in body) {
+    return body
+  } else if ('getReader' in body) {
+    return new Uint8Array(await rsToArrayBuffer(body))
+  } else if ('arrayBuffer' in body) {
+    return new Uint8Array(await body.arrayBuffer())
+  } else {
+    throw new TypeError(`"${getType(body)}" not yet supported by bodyToArrayBufferView`)
   }
 }
