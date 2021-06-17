@@ -80,7 +80,8 @@ describe('EdgeReadableStream', () => {
   })
 
   test('wrong-type', async () => {
-    const stream = rsFromArray([new Date()])
+    const a = new Date() as any
+    const stream = rsFromArray([a])
     await expect(rsToArrayBufferView(stream)).rejects.toThrow(
       'Unexpected type "Date", expected string, ArrayBuffer or Uint8Array',
     )

@@ -180,4 +180,21 @@ describe('EdgeResponse', () => {
     const t = () => r1.clone()
     expect(t).toThrow(new TypeError('Response body is already used'))
   })
+
+  test('body-already-used', async () => {
+    const response = new EdgeResponse('abc')
+    expect(await response.text()).toEqual('abc')
+    await expect(response.json()).rejects.toThrow('Failed to execute "json": body is already used')
+  })
+
+  test('Uint8Array', async () => {
+    const response = new EdgeResponse(new Uint8Array([120, 121, 122]))
+    expect(await response.text()).toEqual('xyz')
+  })
+
+  test('ReadableStream', async () => {
+    const stream = rsFromArray([new Uint8Array([120, 121]), new Uint8Array([122])])
+    const response = new EdgeResponse(stream)
+    expect(await response.text()).toEqual('xyz')
+  })
 })

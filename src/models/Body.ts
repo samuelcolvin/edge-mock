@@ -91,8 +91,6 @@ export async function bodyToArrayBufferView(body: BodyInit): Promise<ArrayBuffer
     return body
   } else if ('byteLength' in body) {
     return new Uint8Array(body)
-  } else if ('getReader' in body) {
-    return await rsToArrayBufferView(body)
   } else if ('arrayBuffer' in body) {
     return new Uint8Array(await body.arrayBuffer())
   } else {
