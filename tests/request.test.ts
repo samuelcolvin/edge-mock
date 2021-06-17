@@ -1,7 +1,7 @@
 import {EdgeReadableStream, EdgeRequest} from '../src'
 import {rsToArrayBufferView} from '../src/utils'
 
-describe('Request', () => {
+describe('EdgeRequest', () => {
   test('construct', async () => {
     const request = new EdgeRequest('/bar/', {method: 'GET'})
     expect(request.method).toEqual('GET')

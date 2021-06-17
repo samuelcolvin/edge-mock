@@ -1,6 +1,6 @@
 import {EdgeHeaders} from '../src'
 
-describe('EdgeBlob', () => {
+describe('EdgeHeaders', () => {
   test('object', async () => {
     const headers = new EdgeHeaders({Foo: 'bar', apple: 'Banana'})
     expect(headers.get('Foo')).toEqual('bar')

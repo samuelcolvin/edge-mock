@@ -1,7 +1,7 @@
 import {EdgeReadableStream} from '../src'
 import {rsFromArray, rsToArrayBufferView, rsToString} from '../src/utils'
 
-describe('EdgeKVNamespace', () => {
+describe('EdgeReadableStream', () => {
   test('basic-string', async () => {
     const iterator = ['foo', 'bar'][Symbol.iterator]()
     const stream = new EdgeReadableStream({
@@ -123,7 +123,7 @@ describe('EdgeKVNamespace', () => {
     const r1 = s1.getReader()
     expect(await r1.read()).toStrictEqual({done: false, value: 'foo'})
     expect(cancelled).toBeFalsy()
-    const cancel_promise = r1.cancel()
+    const cancel_promise = s1.cancel()
     expect(await r1.read()).toStrictEqual({done: true, value: undefined})
     expect(cancelled).toBeTruthy()
     expect(await cancel_promise).toBeUndefined()
