@@ -1,5 +1,5 @@
 import {EdgeReadableStream} from '../src'
-import {rsFromArray, rsToString} from '../src/utils'
+import {rsFromArray, rsToArrayBufferView, rsToString} from '../src/utils'
 
 describe('EdgeKVNamespace', () => {
   test('basic-string', async () => {
@@ -72,6 +72,18 @@ describe('EdgeKVNamespace', () => {
 
     expect(await reader.read()).toStrictEqual({done: true, value: undefined})
     expect(cancelled).toBeTruthy()
+  })
+
+  test('ArrayBuffer', async () => {
+    const stream = rsFromArray([new Uint8Array([100, 101]), new Uint8Array([102, 103])])
+    expect(await rsToArrayBufferView(stream)).toEqual(new Uint8Array([100, 101, 102, 103]))
+  })
+
+  test('wrong-type', async () => {
+    const stream = rsFromArray([new Date()])
+    await expect(rsToArrayBufferView(stream)).rejects.toThrow(
+      'Unexpected type "Date", expected string, ArrayBuffer or Uint8Array',
+    )
   })
 
   test('tee', async () => {
