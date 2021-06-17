@@ -197,4 +197,10 @@ describe('EdgeResponse', () => {
     const response = new EdgeResponse(stream)
     expect(await response.text()).toEqual('xyz')
   })
+
+  test('URLSearchParams', async () => {
+    const searchParams = new URLSearchParams('foo=1&foo=2&bar=345')
+    const response = new EdgeResponse(searchParams)
+    expect(await response.text()).toEqual('foo=1&foo=2&bar=345')
+  })
 })

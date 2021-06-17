@@ -84,7 +84,8 @@ export class EdgeBody implements Body {
 }
 
 // type BodyInit = Blob | BufferSource | FormData | URLSearchParams | ReadableStream<Uint8Array> | string;
-export async function bodyToArrayBufferView(body: BodyInit): Promise<ArrayBufferView> {
+type BodyInit2 = Blob | BufferSource | FormData | URLSearchParams | string
+export async function bodyToArrayBufferView(body: BodyInit2): Promise<ArrayBufferView> {
   if (typeof body == 'string') {
     return encode(body)
   } else if ('buffer' in body) {
@@ -93,6 +94,8 @@ export async function bodyToArrayBufferView(body: BodyInit): Promise<ArrayBuffer
     return new Uint8Array(body)
   } else if ('arrayBuffer' in body) {
     return new Uint8Array(await body.arrayBuffer())
+  } else if (body instanceof URLSearchParams) {
+    return encode(body.toString())
   } else {
     throw new TypeError(`${getType(body)}s are not supported as body types`)
   }
