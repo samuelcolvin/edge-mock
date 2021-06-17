@@ -170,8 +170,15 @@ describe('EdgeKVNamespace', () => {
     expect(kv._manifestJson()).toEqual('{"workflows/ci.yml":"workflows/ci.yml"}')
   })
 
-  test('_add_files-error', async () => {
+  test('_add_files-error-file', async () => {
     const kv = new EdgeKVNamespace()
-    await expect(kv._add_files('package.json')).rejects.toThrow('package.json" is not a directory')
+    await expect(kv._add_files('package.json')).rejects.toThrow('"package.json" is not a directory')
+  })
+
+  test('_add_files-error-missing', async () => {
+    const kv = new EdgeKVNamespace()
+    await expect(kv._add_files('does/not/exist')).rejects.toThrow(
+      "ENOENT: no such file or directory, stat 'does/not/exist'",
+    )
   })
 })

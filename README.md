@@ -3,10 +3,12 @@
 [![ci](https://github.com/samuelcolvin/edge-mock/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/samuelcolvin/edge-mock/actions?query=branch%3Amain)
 [![codecov](https://codecov.io/gh/samuelcolvin/edge-mock/branch/main/graph/badge.svg)](https://codecov.io/gh/samuelcolvin/edge-mock)
 
-Types for developing and testing edge service workers, in particular CloudFlare workers on node.
+Tools for developing and testing edge service workers, in particular CloudFlare workers.
 
-You can consider _edge-mock_ as implementing (almost) all the types declare in the
-[`@cloudflare/workers-types`](https://www.npmjs.com/package/@cloudflare/workers-types) package.
+_edge-mock_ provides three things:
+1. Implementations for types used in service-workers, e.g. `Request`, `Respones`, `FetchEvent` `ReadableStream` etc.
+2. A function `makeEdgeEnv` for installing these types into the global namespace for use in unit tests
+3. A simple HTTP server based on `express.js` which lets you run your service-worker based app locally for development
 
 While _edge-mock_ is designed to be useful when developing 
 [CloudFlare worker](https://developers.cloudflare.com/workers/) applications, it should be usable while developing
@@ -21,7 +23,7 @@ better off writing your code in TypeScript!
 
 ## Usage
 
-_edge-mock_ provides the following types (all available for import directly from `edge-mock`):
+_edge-mock_ provides the following types (all available to import from `edge-mock`):
 
 * `EdgeRequest` - implements the [`Request`](https://developer.mozilla.org/en-US/docs/Web/API/Request) interface
   of the [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API), with the addition of the
@@ -44,15 +46,14 @@ _edge-mock_ provides the following types (all available for import directly from
   is assigned to `global` as `Request`
 
 A few **Notes**:
-* all the above types are designed to use with node and are vanilla in-memory only
+* all the above types are designed for use with node and are vanilla in-memory only implementations
 * `EdgeFormData` to implement [`FormData`](https://developer.mozilla.org/en-US/docs/Web/API/FormData) is not yet built
 
-
-### Example of Usage with Jest
+### Example of Usage for unit testing
 
 _edge-mock_ works well with [jest](https://jestjs.io/) to make writing unit tests for edge workers delightful.
 
-Let's say you have the following `handler.ts`:
+Let's say you have the following `handler.ts` with a function `handleRequest` that you want to test:
 
 ```ts
 export async function handleRequest(event: FetchEvent): Promise<Response> {
@@ -77,7 +78,7 @@ export async function handleRequest(event: FetchEvent): Promise<Response> {
 (To see how this would be deployed to cloudflare, see the 
 [cloudflare worker TypeScript template](https://github.com/cloudflare/worker-typescript-template))
 
-You test the above `handleRequest`, you code use the following:
+You test the above `handleRequest` function, you code use the following:
 
 ```ts
 import {makeEdgeEnv} from 'edge-mock'
@@ -105,3 +106,28 @@ describe('handleRequest', () => {
   })
 })
 ```
+
+### Development Server
+
+The development server relies on webpack and uses webpack-watch to reload the server on code changes.
+
+To run the server, add the following to the `scripts` section of `package.json`:
+
+```json
+  ...
+  "scripts": {
+    "dev": "edge-mock-server"
+    ...
+  },
+  ...
+```
+
+**TODO:** explain how `edge-mock-config.js` works.
+
+You can then run the dev server with:
+
+```bash
+yarn dev
+```
+
+(or `npm run dev` if you use npm rather than yarn)
