@@ -1,6 +1,7 @@
 import {getType, rsToString, rsToArrayBufferView, encode} from '../utils'
 import {EdgeBlob} from './Blob'
 import {EdgeReadableStream} from './ReadableStream'
+import {EdgeFormData} from './FormData'
 
 export class EdgeBody implements Body {
   protected _stream: ReadableStream<Uint8Array> | null = null
@@ -89,6 +90,8 @@ export async function bodyToArrayBufferView(body: BodyInitNotStream): Promise<Ar
     return new Uint8Array(await body.arrayBuffer())
   } else if (body instanceof URLSearchParams) {
     return encode(body.toString())
+  } else if (body instanceof EdgeFormData) {
+    return encode(await body._asMultipart())
   } else {
     throw new TypeError(`${getType(body)}s are not supported as body types`)
   }

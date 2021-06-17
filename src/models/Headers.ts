@@ -5,7 +5,7 @@ export class EdgeHeaders implements Headers {
 
   constructor(init: HeadersInit | Map<string, string> = {}) {
     if (init instanceof EdgeHeaders) {
-      this.map = new Map(init.entries())
+      this.map = new Map(init)
     } else {
       let a: [string, string][]
       if (init instanceof Map) {
@@ -44,8 +44,7 @@ export class EdgeHeaders implements Headers {
   }
 
   forEach(callback: (value: string, key: string, parent: Headers) => void, thisArg?: any): void {
-    const cb = (value: string, key: string, map: Map<string, string>): void =>
-      callback(value, key, new EdgeHeaders(map))
+    const cb = (value: string, key: string): void => callback(value, key, this)
     this.map.forEach(cb, thisArg)
   }
 

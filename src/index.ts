@@ -1,8 +1,27 @@
-import {EdgeRequest, EdgeBlob, EdgeResponse, EdgeFetchEvent, EdgeHeaders, EdgeReadableStream} from './models'
-export {EdgeKVNamespace} from './kv_namespace'
+import {
+  EdgeRequest,
+  EdgeBlob,
+  EdgeFile,
+  EdgeFormData,
+  EdgeResponse,
+  EdgeFetchEvent,
+  EdgeHeaders,
+  EdgeReadableStream,
+} from './models'
 import stub_fetch from './stub_fetch'
 
-export {EdgeRequest, EdgeBlob, EdgeResponse, EdgeFetchEvent, EdgeHeaders, EdgeReadableStream, stub_fetch}
+export {
+  EdgeRequest,
+  EdgeBlob,
+  EdgeFile,
+  EdgeFormData,
+  EdgeResponse,
+  EdgeFetchEvent,
+  EdgeHeaders,
+  EdgeReadableStream,
+  stub_fetch,
+}
+export {EdgeKVNamespace} from './kv_namespace'
 
 declare const global: any
 
@@ -46,6 +65,8 @@ const mock_types = {
   FetchEvent: EdgeFetchEvent,
   Headers: EdgeHeaders,
   Blob: EdgeBlob,
+  File: EdgeFile,
+  FormData: EdgeFormData,
   ReadableStream: EdgeReadableStream,
   fetch: stub_fetch,
 }
