@@ -66,21 +66,23 @@ export class EdgeFormData implements FormData {
   [Symbol.iterator](): IterableIterator<[string, FormDataEntryValue]> {
     return this.entries()
   }
-
-  async _asMultipart(boundary?: string): Promise<string> {
-    boundary = boundary || generateBoundary()
-    let s = ''
-    for (const [key, value] of this) {
-      s += await multipartSection(boundary, key, value)
-    }
-    return `${s}${boundary}--\r\n`
-  }
 }
 
+export async function formDataAsMultipart(form: FormData): Promise<[string, string]> {
+  const boundary = generateBoundary()
+  let s = ''
+  for (const [key, value] of form) {
+    s += await multipartSection(boundary, key, value)
+  }
+  return [boundary, `${s}--${boundary}--\r\n`]
+}
+
+const characters = 'abcdefghijklmnopqrstuvwxyz0123456789'
+
 function generateBoundary(): string {
-  let boundary = '--------------------------'
-  for (let i = 0; i < 24; i++) {
-    boundary += Math.floor(Math.random() * 10).toString(16)
+  let boundary = ''
+  for (let i = 0; i < 32; i++) {
+    boundary += characters.charAt(Math.floor(Math.random() * characters.length))
   }
   return boundary
 }
@@ -90,12 +92,12 @@ async function multipartSection(boundary: string, key: string, value: FormDataEn
   let header = `Content-Disposition: form-data; name="${key}"`
   let body: string
   if (typeof value != 'string') {
-    header += ` filename="${value.name}"\r\nContent-Type: ${value.type || 'application/octet-stream'}`
+    header += `; filename="${value.name}"\r\nContent-Type: ${value.type || 'application/octet-stream'}`
     body = await value.text()
   } else {
     body = value
   }
-  return `${boundary}\r\n${header}\r\n\r\n${body}\r\n`
+  return `--${boundary}\r\n${header}\r\n\r\n${body}\r\n`
 }
 
 function asFormDataEntryValue(value: string | Blob | File): FormDataEntryValue {
@@ -105,3 +107,15 @@ function asFormDataEntryValue(value: string | Blob | File): FormDataEntryValue {
     return {...value, name: 'blob', lastModified: new Date().getTime()}
   }
 }
+
+;`
+--9ea681ff2d18c369b052bcde7bb14e51
+Content-Disposition: form-data; name="foo"
+
+bar
+--9ea681ff2d18c369b052bcde7bb14e51
+Content-Disposition: form-data; name="filekey"; filename="file.txt"
+
+file-content
+--9ea681ff2d18c369b052bcde7bb14e51--
+`

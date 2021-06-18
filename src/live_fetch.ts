@@ -1,12 +1,14 @@
 import node_fetch, {BodyInit} from 'node-fetch'
-import {EdgeHeaders, EdgeResponse} from './models'
+import {EdgeFormData, EdgeResponse} from './models'
 import {check_method} from './models/Request'
 import {rsToArrayBufferView} from './utils'
+import {formDataAsMultipart} from './models/FormData'
+import {asHeaders} from './models/Headers'
 
 export default async function live_fetch(resource: string | URL, init: RequestInit | Request = {}): Promise<Response> {
-  let headers: Record<string, string> | undefined = undefined
+  let headers: Record<string, string> = {}
   if (init.headers) {
-    const h = new EdgeHeaders(init.headers)
+    const h = asHeaders(init.headers)
     h.delete('host')
     headers = Object.fromEntries(h)
   }
@@ -21,6 +23,12 @@ export default async function live_fetch(resource: string | URL, init: RequestIn
       body = await init_body.arrayBuffer()
     } else if ('getReader' in init_body) {
       body = await rsToArrayBufferView(init_body)
+    } else if (init_body instanceof EdgeFormData) {
+      const [boundary, form_body] = await formDataAsMultipart(init_body)
+      if (headers['content-type'] == 'multipart/form-data') {
+        headers['content-type'] = `multipart/form-data; boundary=${boundary}`
+      }
+      body = form_body
     } else {
       // TODO this is a bodge until all cases can be checked
       body = init_body as any

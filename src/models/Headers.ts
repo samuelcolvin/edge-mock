@@ -66,7 +66,7 @@ export class EdgeHeaders implements Headers {
   }
 }
 
-export function as_headers(h: HeadersInit | undefined, default_headers: Record<string, string> = {}): Headers {
+export function asHeaders(h: HeadersInit | undefined, default_headers: Record<string, string> = {}): Headers {
   if (!h) {
     return new EdgeHeaders(default_headers)
   } else if (h instanceof EdgeHeaders) {
