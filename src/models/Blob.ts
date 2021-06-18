@@ -94,6 +94,17 @@ export class EdgeBlob implements Blob {
   }
 }
 
+export class EdgeFile extends EdgeBlob implements File {
+  readonly lastModified: number
+  readonly name: string
+
+  constructor(fileBits: BlobPart[], fileName: string, options?: FilePropertyBag) {
+    super(fileBits, options)
+    this.name = fileName
+    this.lastModified = options?.lastModified || new Date().getTime()
+  }
+}
+
 async function partToArrayBufferView(part: BlobPart): Promise<ArrayBufferView> {
   if (typeof part == 'string') {
     return encode(part)

@@ -1,4 +1,5 @@
-export {EdgeBlob} from './Blob'
+export {EdgeBlob, EdgeFile} from './Blob'
+export {EdgeFormData} from './FormData'
 export {EdgeRequest} from './Request'
 export {EdgeResponse} from './Response'
 export {EdgeFetchEvent} from './FetchEvent'

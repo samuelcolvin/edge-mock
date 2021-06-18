@@ -1,6 +1,6 @@
 import stub_fetch from '../src/stub_fetch'
 import live_fetch from '../src/live_fetch'
-import {EdgeBlob, EdgeRequest} from '../src/'
+import {EdgeBlob, EdgeFile, EdgeFormData, EdgeRequest} from '../src/'
 
 describe('stub_fetch', () => {
   test('200', async () => {
@@ -77,5 +77,19 @@ describe('live_fetch', () => {
     expect(r.status).toEqual(200)
     const obj = await r.json()
     expect(obj.data).toEqual('def')
+  })
+
+  test('formdata', async () => {
+    const body = new EdgeFormData()
+    const file = new EdgeFile(['this is content'], 'foobar.txt')
+    body.append('foo', file)
+    body.append('spam', 'ham')
+    const headers = {'content-type': 'multipart/form-data'}
+    const r = await live_fetch('https://httpbin.org/post', {method: 'POST', body, headers})
+    expect(r.status).toEqual(200)
+    const obj = await r.json()
+    expect(obj.files).toEqual({foo: 'this is content'})
+    expect(obj.form).toEqual({spam: 'ham'})
+    expect(obj.headers['Content-Type']).toMatch(/multipart\/form-data; boundary=[a-z0-9]{32}/)
   })
 })

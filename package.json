@@ -72,6 +72,7 @@
     "preset": "ts-jest"
   },
   "dependencies": {
+    "@cloudflare/workers-types": "^2.2.2",
     "express": "^4.17.1",
     "node-fetch": "^2.6.1"
   },
@@ -79,7 +80,6 @@
     "webpack": "4.x.x || 5.x.x"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^2.2.2",
     "@types/express": "^4.17.12",
     "@types/jest": "^26.0.23",
     "@types/node-fetch": "^2.5.10",

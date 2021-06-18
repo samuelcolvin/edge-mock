@@ -57,6 +57,7 @@ export function rsFromArray(array: string[] | Uint8Array[] | ArrayBuffer[]): Rea
 }
 
 export function catArraysBufferViews(arrays: ArrayBufferView[]): Uint8Array {
+  // TODO would Buffer.concat be faster here?
   const byteLength = arrays.reduce((byteLength, a) => byteLength + a.byteLength, 0)
   const combinedArray = new Uint8Array(byteLength)
   let pos = 0

@@ -1,6 +1,6 @@
 // stubs https://developer.mozilla.org/en-US/docs/Web/API/Response
 import {EdgeBody} from './Body'
-import {as_headers} from './Headers'
+import {asHeaders} from './Headers'
 
 const RedirectStatuses: Set<number> = new Set([301, 302, 303, 307, 308])
 
@@ -19,7 +19,7 @@ export class EdgeResponse extends EdgeBody implements Response {
     this.status = init.status === undefined ? 200 : init.status
     this.ok = this.status >= 200 && this.status < 300
     this.statusText = init.statusText || ''
-    this.headers = as_headers(init.headers)
+    this.headers = asHeaders(init.headers)
     this.url = url
     if (extra) {
       this._extra = extra

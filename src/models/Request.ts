@@ -1,5 +1,5 @@
 // stubs https://developer.mozilla.org/en-US/docs/Web/API/Request
-import {as_headers} from './Headers'
+import {asHeaders} from './Headers'
 import {EdgeBody} from './Body'
 import {example_cf} from './RequestCf'
 
@@ -62,7 +62,7 @@ export class EdgeRequest extends EdgeBody implements Request {
     this.integrity = init?.integrity || '-'
     this.cf = example_cf(init?.cf as any)
 
-    this.headers = as_headers(init?.headers, DEFAULT_HEADERS)
+    this.headers = asHeaders(init?.headers, DEFAULT_HEADERS)
   }
 
   get signal(): AbortSignal {

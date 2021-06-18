@@ -1,4 +1,4 @@
-import {EdgeResponse, EdgeReadableStream, EdgeBlob} from '../src'
+import {EdgeResponse, EdgeReadableStream, EdgeBlob, EdgeFormData, EdgeFile} from '../src'
 import {rsFromArray, rsToString} from '../src/utils'
 
 describe('EdgeResponse', () => {
@@ -124,8 +124,19 @@ describe('EdgeResponse', () => {
   })
 
   test('formData', async () => {
+    const f = new EdgeFormData()
+    f.append('a', 'b')
+    f.append('c', 'd')
+    const response = new EdgeResponse(f)
+    expect([...(await response.formData())]).toStrictEqual([
+      ['a', 'b'],
+      ['c', 'd'],
+    ])
+  })
+
+  test('formData-not-available', async () => {
     const response = new EdgeResponse()
-    await expect(response.formData()).rejects.toThrow('formData not implemented yet')
+    await expect(response.formData()).rejects.toThrow('formData not available')
   })
 
   test('trailer', async () => {
@@ -202,5 +213,16 @@ describe('EdgeResponse', () => {
     const searchParams = new URLSearchParams('foo=1&foo=2&bar=345')
     const response = new EdgeResponse(searchParams)
     expect(await response.text()).toEqual('foo=1&foo=2&bar=345')
+  })
+
+  test('form-response', async () => {
+    const body = new EdgeFormData()
+    const file = new EdgeFile(['this is content'], 'foobar.txt')
+    body.append('foo', file)
+    body.append('spam', 'ham')
+
+    const response = new EdgeResponse(body)
+    const text = await response.text()
+    expect(text).toMatch(/Content-Disposition: form-data; name="foo"; filename="foobar.txt"\r\n/)
   })
 })
