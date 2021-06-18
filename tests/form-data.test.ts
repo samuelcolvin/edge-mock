@@ -34,7 +34,11 @@ describe('EdgeFormData', () => {
     fd.append('a', '1')
     fd.append('a', '2')
     fd.append('b', '3')
-    expect([...fd]).toStrictEqual([['a', '1'], ['a', '2'], ['b', '3']])
+    expect([...fd]).toStrictEqual([
+      ['a', '1'],
+      ['a', '2'],
+      ['b', '3'],
+    ])
   })
 
   test('delete', async () => {
@@ -77,7 +81,10 @@ describe('EdgeFormData', () => {
     const fd = new EdgeFormData()
     fd.append('a', '1')
     fd.append('a', '2')
-    expect([...fd]).toStrictEqual([['a', '1'], ['a', '2']])
+    expect([...fd]).toStrictEqual([
+      ['a', '1'],
+      ['a', '2'],
+    ])
     fd.set('a', '3')
     expect([...fd]).toStrictEqual([['a', '3']])
   })
@@ -86,9 +93,15 @@ describe('EdgeFormData', () => {
     const fd = new EdgeFormData()
     fd.append('a', '1')
     fd.append('b', '2')
-    expect([...fd]).toStrictEqual([['a', '1'], ['b', '2']])
+    expect([...fd]).toStrictEqual([
+      ['a', '1'],
+      ['b', '2'],
+    ])
     fd.set('a', '3')
-    expect([...fd]).toStrictEqual([['a', '3'], ['b', '2']])
+    expect([...fd]).toStrictEqual([
+      ['a', '3'],
+      ['b', '2'],
+    ])
   })
 
   test('append-blob', async () => {

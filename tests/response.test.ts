@@ -124,8 +124,19 @@ describe('EdgeResponse', () => {
   })
 
   test('formData', async () => {
+    const f = new EdgeFormData()
+    f.append('a', 'b')
+    f.append('c', 'd')
+    const response = new EdgeResponse(f)
+    expect([...(await response.formData())]).toStrictEqual([
+      ['a', 'b'],
+      ['c', 'd'],
+    ])
+  })
+
+  test('formData-not-available', async () => {
     const response = new EdgeResponse()
-    await expect(response.formData()).rejects.toThrow('formData not implemented yet')
+    await expect(response.formData()).rejects.toThrow('formData not available')
   })
 
   test('trailer', async () => {

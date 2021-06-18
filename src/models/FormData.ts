@@ -110,4 +110,3 @@ function asFormDataEntryValue(value: string | Blob | File): FormDataEntryValue {
     return new EdgeFile(parts, 'blob')
   }
 }
-
