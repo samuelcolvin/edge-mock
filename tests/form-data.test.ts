@@ -29,7 +29,7 @@ describe('EdgeFormData', () => {
     )
   })
 
-  test('append', async () => {
+  test('append', () => {
     const fd = new EdgeFormData()
     fd.append('a', '1')
     fd.append('a', '2')
@@ -41,7 +41,7 @@ describe('EdgeFormData', () => {
     ])
   })
 
-  test('delete', async () => {
+  test('delete', () => {
     const fd = new EdgeFormData()
     fd.append('a', '1')
     fd.append('a', '2')
@@ -50,7 +50,7 @@ describe('EdgeFormData', () => {
     expect([...fd]).toStrictEqual([['b', '3']])
   })
 
-  test('get', async () => {
+  test('get', () => {
     const fd = new EdgeFormData()
     fd.append('a', '1')
     expect(fd.get('a')).toEqual('1')
@@ -59,7 +59,7 @@ describe('EdgeFormData', () => {
     expect(fd.get('b')).toBeNull()
   })
 
-  test('getAll', async () => {
+  test('getAll', () => {
     const fd = new EdgeFormData()
     expect(fd.getAll('a')).toStrictEqual([])
     fd.append('a', '1')
@@ -68,7 +68,7 @@ describe('EdgeFormData', () => {
     expect(fd.getAll('a')).toStrictEqual(['1', '2'])
   })
 
-  test('has', async () => {
+  test('has', () => {
     const fd = new EdgeFormData()
     expect(fd.has('a')).toStrictEqual(false)
     fd.append('a', '1')
@@ -77,7 +77,7 @@ describe('EdgeFormData', () => {
     expect(fd.has('a')).toStrictEqual(true)
   })
 
-  test('set', async () => {
+  test('set', () => {
     const fd = new EdgeFormData()
     fd.append('a', '1')
     fd.append('a', '2')
@@ -89,7 +89,7 @@ describe('EdgeFormData', () => {
     expect([...fd]).toStrictEqual([['a', '3']])
   })
 
-  test('set-order', async () => {
+  test('set-order', () => {
     const fd = new EdgeFormData()
     fd.append('a', '1')
     fd.append('b', '2')
@@ -112,5 +112,44 @@ describe('EdgeFormData', () => {
     expect(f.name).toEqual('blob')
     expect(await f.text()).toEqual('this is content')
     expect(Number.isInteger(f.lastModified)).toBeTruthy()
+  })
+
+  test('keys-values', () => {
+    const fd = new EdgeFormData()
+    fd.append('a', '1')
+    fd.append('a', '2')
+    fd.append('b', '3')
+    expect([...fd.keys()]).toEqual(['a', 'b'])
+    expect([...fd.values()]).toEqual(['1', '2', '3'])
+  })
+
+  test('ForEach', () => {
+    const fd = new EdgeFormData()
+    fd.append('a', '1')
+    fd.append('a', '2')
+    fd.append('b', '3')
+    const array: any[] = []
+    fd.forEach((value, key, parent) => {
+      expect(parent).toBeInstanceOf(EdgeFormData)
+      array.push({value, key})
+    })
+    expect(array).toStrictEqual([
+      {value: '1', key: 'a'},
+      {value: '2', key: 'a'},
+      {value: '3', key: 'b'},
+    ])
+  })
+
+  test('ForEach-thisArg', () => {
+    const fd = new EdgeFormData()
+    fd.append('a', '1')
+    fd.append('a', '1')
+    fd.append('b', '1')
+
+    function cb(this: any, value: FormDataEntryValue): void {
+      expect(value).toEqual('1')
+      expect(this).toEqual('test-this')
+    }
+    fd.forEach(cb, 'test-this')
   })
 })
