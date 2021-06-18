@@ -4,6 +4,7 @@ import {EdgeReadableStream} from './ReadableStream'
 import {EdgeFormData, formDataAsMultipart} from './FormData'
 
 export class EdgeBody implements Body {
+  protected _form_data?: FormData
   protected _stream: ReadableStream<Uint8Array> | null = null
 
   constructor(content: BodyInit | null | undefined) {
@@ -11,6 +12,9 @@ export class EdgeBody implements Body {
       if (typeof content != 'string' && 'getReader' in content) {
         this._stream = content
       } else {
+        if (content instanceof EdgeFormData) {
+          this._form_data = content
+        }
         this._stream = new EdgeReadableStream({
           async start(controller) {
             const abv = await bodyToArrayBufferView(content)
@@ -59,7 +63,11 @@ export class EdgeBody implements Body {
   }
 
   async formData(): Promise<FormData> {
-    throw new Error('formData not implemented yet')
+    if (this._form_data) {
+      return this._form_data
+    } else {
+      throw new Error('formData not available')
+    }
   }
 
   protected async _text(): Promise<string> {

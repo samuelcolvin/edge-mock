@@ -1,3 +1,5 @@
+import {EdgeFile} from './Blob'
+
 export class EdgeFormData implements FormData {
   protected map: Map<string, FormDataEntryValue[]> = new Map()
 
@@ -104,18 +106,8 @@ function asFormDataEntryValue(value: string | Blob | File): FormDataEntryValue {
   if (typeof value == 'string' || 'name' in value) {
     return value
   } else {
-    return {...value, name: 'blob', lastModified: new Date().getTime()}
+    const parts = (value as any)._parts
+    return new EdgeFile(parts, 'blob')
   }
 }
 
-;`
---9ea681ff2d18c369b052bcde7bb14e51
-Content-Disposition: form-data; name="foo"
-
-bar
---9ea681ff2d18c369b052bcde7bb14e51
-Content-Disposition: form-data; name="filekey"; filename="file.txt"
-
-file-content
---9ea681ff2d18c369b052bcde7bb14e51--
-`
