@@ -34,6 +34,8 @@ _edge-mock_ provides the following types (all available to import from `edge-moc
   with many attributes set to `undefined` to match `FetchEvent`s in CloudFlare workers
 * `EdgeBlob` - implements the [`Blob`](https://developer.mozilla.org/en-US/docs/Web/API/Blob) interface
 * `EdgeFormData` implements the [`FormData`](https://developer.mozilla.org/en-US/docs/Web/API/FormData) interface
+* `EdgeFile` implements the [`File`](https://developer.mozilla.org/en-US/docs/Web/API/File) 
+  interface as used by `FormData`
 * `EdgeHeaders` - implements the [`Headers`](https://developer.mozilla.org/en-US/docs/Web/API/Headers) interface
 * `EdgeReadableStream` - in memory implementation of the 
   [`ReadableStream`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream) interface
