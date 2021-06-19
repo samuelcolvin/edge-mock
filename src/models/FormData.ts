@@ -84,14 +84,16 @@ const randChar = () => characters.charAt(Math.floor(Math.random() * characters.l
 const generateBoundary = () => [...Array(32)].map(randChar).join('')
 
 async function multipartSection(boundary: string, key: string, value: FormDataEntryValue): Promise<string> {
-  // TODO do we need to escape name, filename and content-type?
-  let header = `Content-Disposition: form-data; name="${key}"`
+  let header = `Content-Disposition: form-data; name="${encodeURI(key)}"`
   let body: string
-  if (typeof value != 'string') {
-    header += `; filename="${value.name}"\r\nContent-Type: ${value.type || 'application/octet-stream'}`
-    body = await value.text()
-  } else {
+  if (typeof value == 'string') {
     body = value
+  } else {
+    header += `; filename="${encodeURI(value.name)}"`
+    if (value.type) {
+      header += `\r\nContent-Type: ${encodeURI(value.type)}`
+    }
+    body = await value.text()
   }
   return `--${boundary}\r\n${header}\r\n\r\n${body}\r\n`
 }
