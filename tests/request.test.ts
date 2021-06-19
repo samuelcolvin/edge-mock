@@ -1,4 +1,4 @@
-import {EdgeReadableStream, EdgeRequest} from '../src'
+import {EdgeFormData, EdgeReadableStream, EdgeRequest} from '../src'
 import {rsToArrayBufferView} from '../src/utils'
 
 describe('EdgeRequest', () => {
@@ -60,5 +60,31 @@ describe('EdgeRequest', () => {
   test('get-body', async () => {
     const init = {method: 'FOOBAR'} as any
     expect(() => new EdgeRequest('/', {body: 'xx'})).toThrow('Request with GET/HEAD method cannot have body.')
+  })
+
+  test('FormData', async () => {
+    const body = new EdgeFormData()
+    body.append('foo', 'bar')
+    body.append('foo', 'bat')
+
+    const request = new EdgeRequest('https://www.example.com', {method: 'POST', body})
+    expect([...(await request.formData())]).toStrictEqual([
+      ['foo', 'bar'],
+      ['foo', 'bat'],
+    ])
+  })
+
+  test('clone-FormData', async () => {
+    const body = new EdgeFormData()
+    body.append('foo', 'bar')
+    body.append('foo', 'bat')
+
+    const r1 = new EdgeRequest('https://www.example.com', {method: 'POST', body})
+    const r2 = r1.clone()
+    expect(r2.method).toEqual('POST')
+    expect([...(await r2.formData())]).toStrictEqual([
+      ['foo', 'bar'],
+      ['foo', 'bat'],
+    ])
   })
 })

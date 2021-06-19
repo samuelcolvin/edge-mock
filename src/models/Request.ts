@@ -75,7 +75,7 @@ export class EdgeRequest extends EdgeBody implements Request {
     return new constructor(this.url, {
       method: this.method,
       headers: this.headers,
-      body: this.body,
+      body: this._form_data || this.body,
       mode: this.mode,
       credentials: this.credentials,
       cache: this.cache,

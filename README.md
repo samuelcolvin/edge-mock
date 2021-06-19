@@ -10,6 +10,9 @@ _edge-mock_ provides three things:
 2. A function `makeEdgeEnv` for installing these types into the global namespace for use in unit tests
 3. A simple HTTP server based on `express.js` which lets you run your service-worker based app locally for development
 
+You can consider _edge-mock_ as implementing (almost) all the types declare in the
+[`@cloudflare/workers-types`](https://www.npmjs.com/package/@cloudflare/workers-types) typescript types package.
+
 While _edge-mock_ is designed to be useful when developing 
 [CloudFlare worker](https://developers.cloudflare.com/workers/) applications, it should be usable while developing
 any service-worker app including for (future) alternative edge worker implementations.
