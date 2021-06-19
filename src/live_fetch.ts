@@ -1,11 +1,12 @@
 import node_fetch, {BodyInit} from 'node-fetch'
+import {rsToArrayBufferView} from './utils'
 import {EdgeFormData, EdgeResponse} from './models'
 import {check_method} from './models/Request'
-import {rsToArrayBufferView} from './utils'
 import {formDataAsMultipart} from './models/FormData'
 import {asHeaders} from './models/Headers'
 
-export default async function live_fetch(resource: string | URL, init: RequestInit | Request = {}): Promise<Response> {
+export default async function (resource: string | URL, init: RequestInit | Request = {}): Promise<Response> {
+  const method = check_method(init.method)
   let headers: Record<string, string> = {}
   if (init.headers) {
     const h = asHeaders(init.headers)
@@ -35,7 +36,7 @@ export default async function live_fetch(resource: string | URL, init: RequestIn
     }
   }
 
-  const r = await node_fetch(resource, {method: check_method(init.method), headers, body})
+  const r = await node_fetch(resource, {method, headers, body})
   const response_headers = Object.fromEntries(r.headers)
   const response_body = await r.arrayBuffer()
   return new EdgeResponse(response_body, {status: r.status, headers: response_headers}, r.url)

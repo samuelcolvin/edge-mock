@@ -80,14 +80,8 @@ export async function formDataAsMultipart(form: FormData): Promise<[string, stri
 }
 
 const characters = 'abcdefghijklmnopqrstuvwxyz0123456789'
-
-function generateBoundary(): string {
-  let boundary = ''
-  for (let i = 0; i < 32; i++) {
-    boundary += characters.charAt(Math.floor(Math.random() * characters.length))
-  }
-  return boundary
-}
+const randChar = () => characters.charAt(Math.floor(Math.random() * characters.length))
+const generateBoundary = () => [...Array(32)].map(randChar).join('')
 
 async function multipartSection(boundary: string, key: string, value: FormDataEntryValue): Promise<string> {
   // TODO do we need to escape name, filename and content-type?

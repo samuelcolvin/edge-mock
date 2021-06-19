@@ -48,6 +48,10 @@ _edge-mock_ provides the following types (all available to import from `edge-moc
   used in worker scripts; types are installed into global by the name of the type they shadow, e.g. `EdgeRequest`
   is assigned to `global` as `Request`
 
+There's also `fetch_live` (import with `import live_fetch from 'edge-mock/live_fetch'`) which is an implementation
+of `fetch` which makes actual http requests using `node-fetch`. It is installed by default instead of
+`stub_fetch` in the dev server, see below.
+
 **Please Note**: all the above types are designed for use with node while testing and are vanilla in-memory
 only implementations. They are not designed for production use or with large payloads.
 
@@ -80,7 +84,7 @@ export async function handleRequest(event: FetchEvent): Promise<Response> {
 (To see how this would be deployed to cloudflare, see the 
 [cloudflare worker TypeScript template](https://github.com/cloudflare/worker-typescript-template))
 
-You test the above `handleRequest` function, you code use the following:
+To test the above `handleRequest` function, you could use the following:
 
 ```ts
 import {makeEdgeEnv} from 'edge-mock'
@@ -93,9 +97,10 @@ describe('handleRequest', () => {
   })
 
   test('post', async () => {
-    // Request is available here because makeEdgeEnv installed the proxy EdgeRequest into global
-    // under that name, same with FetchEvent etc.
+    // Request is available here AND in handleRequest because makeEdgeEnv installed
+    // the proxy EdgeRequest into global under that name
     const request = new Request('/?foo=1', {method: 'POST', body: 'hello'})
+    // same with FetchEvent, Response etc.
     const event = new FetchEvent('fetch', {request})
     const response = await handleRequest(event)
     expect(response.status).toEqual(200)
