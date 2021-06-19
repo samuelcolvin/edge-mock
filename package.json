@@ -71,6 +71,15 @@
     ],
     "preset": "ts-jest"
   },
+  "prettier": {
+    "singleQuote": true,
+    "semi": false,
+    "trailingComma": "all",
+    "tabWidth": 2,
+    "printWidth": 119,
+    "bracketSpacing": false,
+    "arrowParens": "avoid"
+  },
   "dependencies": {
     "@cloudflare/workers-types": "^2.2.2",
     "express": "^4.17.1",
