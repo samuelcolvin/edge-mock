@@ -128,6 +128,7 @@ describe('EdgeResponse', () => {
     f.append('a', 'b')
     f.append('c', 'd')
     const response = new EdgeResponse(f)
+    expect(response.headers.get('content-type')).toMatch(/^multipart\/form-data; boundary=/)
     expect([...(await response.formData())]).toStrictEqual([
       ['a', 'b'],
       ['c', 'd'],
@@ -136,7 +137,7 @@ describe('EdgeResponse', () => {
 
   test('formData-not-available', async () => {
     const response = new EdgeResponse()
-    await expect(response.formData()).rejects.toThrow('formData not available')
+    await expect(response.formData()).rejects.toThrow('unable to parse form data, invalid content-type header')
   })
 
   test('trailer', async () => {

@@ -1,6 +1,6 @@
 // stubs https://developer.mozilla.org/en-US/docs/Web/API/Request
 import {asHeaders} from './Headers'
-import {EdgeBody} from './Body'
+import {EdgeBody, findBoundary} from './Body'
 import {example_cf} from './RequestCf'
 
 const DEFAULT_HEADERS = {
@@ -50,7 +50,10 @@ export class EdgeRequest extends EdgeBody implements Request {
       throw new TypeError('Request with GET/HEAD method cannot have body.')
     }
 
-    super(init?.body)
+    const headers = asHeaders(init?.headers, DEFAULT_HEADERS)
+    const boundary = findBoundary(headers, init?.body)
+    super(init?.body, boundary)
+    this.headers = headers
     this.url = 'https://example.com' + url
     this.method = method
     this.mode = init?.mode || 'same-origin'
@@ -61,8 +64,6 @@ export class EdgeRequest extends EdgeBody implements Request {
     this.redirect = init?.redirect || 'follow'
     this.integrity = init?.integrity || '-'
     this.cf = example_cf(init?.cf as any)
-
-    this.headers = asHeaders(init?.headers, DEFAULT_HEADERS)
   }
 
   get signal(): AbortSignal {
@@ -75,7 +76,7 @@ export class EdgeRequest extends EdgeBody implements Request {
     return new constructor(this.url, {
       method: this.method,
       headers: this.headers,
-      body: this._form_data || this.body,
+      body: this.body,
       mode: this.mode,
       credentials: this.credentials,
       cache: this.cache,

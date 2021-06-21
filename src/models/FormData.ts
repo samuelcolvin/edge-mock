@@ -70,34 +70,6 @@ export class EdgeFormData implements FormData {
   }
 }
 
-export async function formDataAsMultipart(form: FormData): Promise<[string, string]> {
-  const boundary = generateBoundary()
-  let s = ''
-  for (const [key, value] of form) {
-    s += await multipartSection(boundary, key, value)
-  }
-  return [boundary, `${s}--${boundary}--\r\n`]
-}
-
-const characters = 'abcdefghijklmnopqrstuvwxyz0123456789'
-const randChar = () => characters.charAt(Math.floor(Math.random() * characters.length))
-const generateBoundary = () => [...Array(32)].map(randChar).join('')
-
-async function multipartSection(boundary: string, key: string, value: FormDataEntryValue): Promise<string> {
-  let header = `Content-Disposition: form-data; name="${encodeURI(key)}"`
-  let body: string
-  if (typeof value == 'string') {
-    body = value
-  } else {
-    header += `; filename="${encodeURI(value.name)}"`
-    if (value.type) {
-      header += `\r\nContent-Type: ${encodeURI(value.type)}`
-    }
-    body = await value.text()
-  }
-  return `--${boundary}\r\n${header}\r\n\r\n${body}\r\n`
-}
-
 function asFormDataEntryValue(value: string | Blob | File): FormDataEntryValue {
   if (typeof value == 'string' || 'name' in value) {
     return value

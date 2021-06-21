@@ -1,23 +1,25 @@
 import {getType, rsToString, rsToArrayBufferView, encode} from '../utils'
+import {formDataAsString, stringAsFormData, generateBoundary} from '../forms'
 import {EdgeBlob} from './Blob'
 import {EdgeReadableStream} from './ReadableStream'
-import {EdgeFormData, formDataAsMultipart} from './FormData'
+import {EdgeFormData} from './FormData'
+
+// type BodyInit = Blob | BufferSource | FormData | URLSearchParams | ReadableStream<Uint8Array> | string;
+type BodyInitNotStream = Blob | BufferSource | FormData | URLSearchParams | string
 
 export class EdgeBody implements Body {
-  protected _form_data?: FormData
+  protected _formBoundary?: string
   protected _stream: ReadableStream<Uint8Array> | null = null
 
-  constructor(content: BodyInit | null | undefined) {
+  constructor(content: BodyInit | null | undefined, formBoundary?: string) {
+    this._formBoundary = formBoundary
     if (content) {
       if (typeof content != 'string' && 'getReader' in content) {
         this._stream = content
       } else {
-        if (content instanceof EdgeFormData) {
-          this._form_data = content
-        }
         this._stream = new EdgeReadableStream({
-          async start(controller) {
-            const abv = await bodyToArrayBufferView(content)
+          start: async controller => {
+            const abv = await this._bodyToArrayBufferView(content)
             controller.enqueue(abv as Uint8Array)
           },
         })
@@ -63,10 +65,10 @@ export class EdgeBody implements Body {
   }
 
   async formData(): Promise<FormData> {
-    if (this._form_data) {
-      return this._form_data
+    if (this._formBoundary) {
+      return stringAsFormData(this._formBoundary, await this.text())
     } else {
-      throw new Error('formData not available')
+      throw new Error('unable to parse form data, invalid content-type header')
     }
   }
 
@@ -83,25 +85,37 @@ export class EdgeBody implements Body {
       throw new Error(`Failed to execute "${name}": body is already used`)
     }
   }
+
+  protected async _bodyToArrayBufferView(body: BodyInitNotStream): Promise<ArrayBufferView> {
+    if (typeof body == 'string') {
+      return encode(body)
+    } else if ('buffer' in body) {
+      return body
+    } else if ('byteLength' in body) {
+      return new Uint8Array(body)
+    } else if ('arrayBuffer' in body) {
+      return new Uint8Array(await body.arrayBuffer())
+    } else if (body instanceof URLSearchParams) {
+      return encode(body.toString())
+    } else if (body instanceof EdgeFormData) {
+      const [_, form_body] = await formDataAsString(body, this._formBoundary)
+      return encode(form_body)
+    } else {
+      throw new TypeError(`${getType(body)}s are not supported as body types`)
+    }
+  }
 }
 
-// type BodyInit = Blob | BufferSource | FormData | URLSearchParams | ReadableStream<Uint8Array> | string;
-type BodyInitNotStream = Blob | BufferSource | FormData | URLSearchParams | string
-export async function bodyToArrayBufferView(body: BodyInitNotStream): Promise<ArrayBufferView> {
-  if (typeof body == 'string') {
-    return encode(body)
-  } else if ('buffer' in body) {
-    return body
-  } else if ('byteLength' in body) {
-    return new Uint8Array(body)
-  } else if ('arrayBuffer' in body) {
-    return new Uint8Array(await body.arrayBuffer())
-  } else if (body instanceof URLSearchParams) {
-    return encode(body.toString())
-  } else if (body instanceof EdgeFormData) {
-    const [, form_body] = await formDataAsMultipart(body)
-    return encode(form_body)
-  } else {
-    throw new TypeError(`${getType(body)}s are not supported as body types`)
+export function findBoundary(headers: Headers, content: BodyInit | null | undefined): string | undefined {
+  const content_type = headers.get('content-type')
+  const m_boundary = content_type ? content_type.match(/^multipart\/form-data; ?boundary=(.+)$/i) : null
+  if (m_boundary) {
+    return m_boundary[1]
+  } else if (content instanceof EdgeFormData) {
+    const boundary = generateBoundary()
+    if (!content_type || content_type == 'multipart/form-data') {
+      headers.set('content-type', `multipart/form-data; boundary=${boundary}`)
+    }
+    return boundary
   }
 }

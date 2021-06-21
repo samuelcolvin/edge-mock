@@ -1,5 +1,5 @@
-import {EdgeFormData, EdgeReadableStream, EdgeRequest} from '../src'
-import {rsToArrayBufferView} from '../src/utils'
+import {EdgeFile, EdgeFormData, EdgeReadableStream, EdgeRequest} from '../src'
+import {encode, rsToArrayBufferView} from '../src/utils'
 
 describe('EdgeRequest', () => {
   test('construct', async () => {
@@ -74,12 +74,53 @@ describe('EdgeRequest', () => {
     ])
   })
 
+  test('FormData-body', async () => {
+    const body = new EdgeFormData()
+    body.append('foo', 'bar')
+    body.append('foo', 'bat')
+
+    const r1 = new EdgeRequest('https://www.example.com', {method: 'POST', body})
+    expect(r1.headers.get('content-type')).toMatch(/multipart\/form-data; boundary=\S+/)
+    const boundary = (r1.headers.get('content-type') as string).match(/boundary=(\S+)/)
+    expect(boundary).not.toBeNull()
+    const f = await r1.text()
+    expect(f.startsWith(`--${(boundary as RegExpExecArray)[1]}`))
+  })
+
+  test('FormData-raw', async () => {
+    const raw_body = `
+--1d1ea31edf6ccb39794b748ce125e269
+Content-Disposition: form-data; name="foo"
+
+bar
+--1d1ea31edf6ccb39794b748ce125e269
+Content-Disposition: form-data; name="filekey"; filename="file.txt"
+Content-Type: text/plain
+
+file content
+--1d1ea31edf6ccb39794b748ce125e269--`
+    const body = encode(raw_body.replace(/\r?\n/g, '\r\n'))
+    const headers = {'Content-Type': 'multipart/form-data; boundary=1d1ea31edf6ccb39794b748ce125e269'}
+
+    const request = new EdgeRequest('/', {method: 'POST', body, headers})
+
+    const fd = await request.formData()
+    expect([...fd.keys()]).toEqual(['foo', 'filekey'])
+    expect(fd.get('foo')).toEqual('bar')
+    const file = fd.get('filekey') as EdgeFile
+    expect(file).toBeInstanceOf(EdgeFile)
+    expect(file.name).toEqual('file.txt')
+    expect(file.type).toEqual('text/plain')
+    expect(await file.text()).toEqual('file content')
+  })
+
   test('clone-FormData', async () => {
     const body = new EdgeFormData()
     body.append('foo', 'bar')
     body.append('foo', 'bat')
 
     const r1 = new EdgeRequest('https://www.example.com', {method: 'POST', body})
+
     const r2 = r1.clone()
     expect(r2.method).toEqual('POST')
     expect([...(await r2.formData())]).toStrictEqual([
