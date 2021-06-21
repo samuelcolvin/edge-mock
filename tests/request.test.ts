@@ -80,6 +80,8 @@ describe('EdgeRequest', () => {
     body.append('foo', 'bat')
 
     const r1 = new EdgeRequest('https://www.example.com', {method: 'POST', body})
+    expect(r1.headers.get('content-type')).toMatch(/multipart\/form-data; boundary=\S+/)
+
     const r2 = r1.clone()
     expect(r2.method).toEqual('POST')
     expect([...(await r2.formData())]).toStrictEqual([

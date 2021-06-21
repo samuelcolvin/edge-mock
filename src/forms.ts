@@ -62,8 +62,8 @@ function extract_headers(h: string): Headers {
   return headers
 }
 
-export async function formDataAsMultipart(form: FormData): Promise<[string, string]> {
-  const boundary = generateBoundary()
+export async function formDataAsMultipart(form: FormData, boundary?: string): Promise<[string, string]> {
+  boundary = boundary || generateBoundary()
   let s = ''
   for (const [key, value] of form) {
     s += await multipartSection(boundary, key, value)
@@ -73,7 +73,7 @@ export async function formDataAsMultipart(form: FormData): Promise<[string, stri
 
 const characters = 'abcdefghijklmnopqrstuvwxyz0123456789'
 const randChar = () => characters.charAt(Math.floor(Math.random() * characters.length))
-const generateBoundary = () => [...Array(32)].map(randChar).join('')
+export const generateBoundary = () => [...Array(32)].map(randChar).join('')
 
 async function multipartSection(boundary: string, key: string, value: FormDataEntryValue): Promise<string> {
   let header = `Content-Disposition: form-data; name="${encodeURI(key)}"`

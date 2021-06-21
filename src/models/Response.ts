@@ -1,6 +1,7 @@
 // stubs https://developer.mozilla.org/en-US/docs/Web/API/Response
-import {EdgeBody} from './Body'
+import {EdgeBody, findBoundary} from './Body'
 import {asHeaders} from './Headers'
+import {stringAsFormData} from '../forms'
 
 const RedirectStatuses: Set<number> = new Set([301, 302, 303, 307, 308])
 
@@ -15,11 +16,13 @@ export class EdgeResponse extends EdgeBody implements Response {
   readonly _extra?: any
 
   constructor(body?: BodyInit | null, init: ResponseInit = {}, url = 'https://example.com', extra?: any) {
-    super(body)
+    const headers = asHeaders(init.headers)
+    const boundary = findBoundary(headers, body)
+    super(body, boundary)
+    this.headers = headers
     this.status = init.status === undefined ? 200 : init.status
     this.ok = this.status >= 200 && this.status < 300
     this.statusText = init.statusText || ''
-    this.headers = asHeaders(init.headers)
     this.url = url
     if (extra) {
       this._extra = extra
