@@ -20,46 +20,36 @@ export function stringAsFormData(boundary: string, body: string): FormData {
       throw new Error('body is not well formed, no break found between headers and body')
     }
 
-    const headers = extract_headers(body.slice(start, sep))
+    const header_content = body.slice(start, sep)
+    const n = header_content.match(/name ?= ?"(.+?)"/)
+    if (!n) {
+      throw new Error('name not found in header')
+    }
+    const name = decodeURI(n[1])
+    let filename: string | undefined = undefined
+    let type: string | undefined = undefined
+
+    const fn = header_content.match(/filename ?= ?"(.+?)"/)
+    if (fn) {
+      filename = decodeURI(fn[1])
+    }
+    const ct = header_content.match(/\r\nContent-Type: ?(.+)/)
+    if (ct) {
+      type = decodeURI(ct[1])
+    }
 
     let chunk_body = body.slice(sep + 4, end)
     chunk_body = chunk_body.substr(0, chunk_body.lastIndexOf('\r\n'))
-    let value: string | File
-    if (headers.filename || headers.type) {
-      value = new EdgeFile([chunk_body], headers.filename || 'blob', {type: headers.type})
+
+    if (filename || type) {
+      form.append(name, new EdgeFile([chunk_body], filename || 'blob', {type}))
     } else {
-      value = chunk_body
+      form.append(name, chunk_body)
     }
-    form.append(headers.name, value)
+
     // + 2 to account for \r\n
-    start = end + 2
+    start = end + boundaryLength + 2
   }
-}
-
-interface Headers {
-  name: string
-  filename?: string
-  type?: string
-}
-
-function extract_headers(h: string): Headers {
-  const n = h.match(/name ?= ?"(.+?)"/)
-  if (!n) {
-    throw new Error('name not found in header')
-  }
-  const headers: Headers = {name: decodeURI(n[1])}
-
-  const fn = h.match(/filename ?= ?"(.+?)"/)
-  if (fn) {
-    headers.filename = decodeURI(fn[1])
-
-    const ct = h.match(/\r\nContent-Type: ?(.+)/)
-    if (ct) {
-      headers.type = decodeURI(ct[1])
-    }
-  }
-
-  return headers
 }
 
 export async function formDataAsString(form: FormData, boundary?: string): Promise<[string, string]> {
@@ -71,9 +61,9 @@ export async function formDataAsString(form: FormData, boundary?: string): Promi
   return [boundary, `${s}--${boundary}--\r\n`]
 }
 
+export const generateBoundary = () => [...Array(32)].map(randChar).join('')
 const characters = 'abcdefghijklmnopqrstuvwxyz0123456789'
 const randChar = () => characters.charAt(Math.floor(Math.random() * characters.length))
-export const generateBoundary = () => [...Array(32)].map(randChar).join('')
 
 async function multipartSection(boundary: string, key: string, value: FormDataEntryValue): Promise<string> {
   let header = `Content-Disposition: form-data; name="${encodeURI(key)}"`
