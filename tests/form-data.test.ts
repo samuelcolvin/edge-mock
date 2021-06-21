@@ -233,14 +233,19 @@ describe('stringAsFormData', () => {
     expect(Object.fromEntries(fd2)).toStrictEqual({'"foo"': 'apple\r\n"banana"\r\n\r\ncarrot\n\r\n'})
   })
 
-  test('no-boundary', async () => {
+  test('invalid-no-boundary', async () => {
     expect(() => stringAsFormData('foobar', 'spam')).toThrow('boundary not found anywhere in body')
   })
 
-  test('no-separator', async () => {
+  test('invalid-no-separator', async () => {
     const body = '--[boundary]\r\nContent-Disposition: form-data; name="foo";\r\nthis is body--[boundary]--\r\n'
     expect(() => stringAsFormData('[boundary]', body)).toThrow(
       'body is not well formed, no break found between headers and body',
     )
+  })
+
+  test('invalid-no-name', async () => {
+    const body = '--[boundary]\r\nContent-Disposition: form-data;\r\n\r\nthis is body\r\n--[boundary]--\r\n'
+    expect(() => stringAsFormData('[boundary]', body)).toThrow('name not found in header')
   })
 })
