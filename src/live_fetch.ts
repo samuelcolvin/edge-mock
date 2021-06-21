@@ -2,7 +2,7 @@ import node_fetch, {BodyInit} from 'node-fetch'
 import {rsToArrayBufferView} from './utils'
 import {EdgeFormData, EdgeResponse} from './models'
 import {check_method} from './models/Request'
-import {formDataAsMultipart} from './models/FormData'
+import {formDataAsMultipart} from './forms'
 import {asHeaders} from './models/Headers'
 
 export default async function (resource: string | URL, init: RequestInit | Request = {}): Promise<Response> {

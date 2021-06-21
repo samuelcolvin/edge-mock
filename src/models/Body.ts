@@ -1,7 +1,8 @@
 import {getType, rsToString, rsToArrayBufferView, encode} from '../utils'
+import {formDataAsMultipart} from '../forms'
 import {EdgeBlob} from './Blob'
 import {EdgeReadableStream} from './ReadableStream'
-import {EdgeFormData, formDataAsMultipart} from './FormData'
+import {EdgeFormData} from './FormData'
 
 export class EdgeBody implements Body {
   protected _form_data?: FormData
