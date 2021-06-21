@@ -1,7 +1,6 @@
 // stubs https://developer.mozilla.org/en-US/docs/Web/API/Response
 import {EdgeBody, findBoundary} from './Body'
 import {asHeaders} from './Headers'
-import {stringAsFormData} from '../forms'
 
 const RedirectStatuses: Set<number> = new Set([301, 302, 303, 307, 308])
 

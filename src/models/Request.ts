@@ -2,7 +2,6 @@
 import {asHeaders} from './Headers'
 import {EdgeBody, findBoundary} from './Body'
 import {example_cf} from './RequestCf'
-import {stringAsFormData} from '../forms'
 
 const DEFAULT_HEADERS = {
   accept: '*/*',

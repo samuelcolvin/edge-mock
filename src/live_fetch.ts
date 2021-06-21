@@ -26,7 +26,8 @@ export default async function (resource: string | URL, init: RequestInit | Reque
       body = await rsToArrayBufferView(init_body)
     } else if (init_body instanceof EdgeFormData) {
       const [boundary, form_body] = await formDataAsString(init_body)
-      if (headers['content-type'] == 'multipart/form-data') {
+      const ct = headers['content-type']
+      if (!ct || ct == 'multipart/form-data') {
         headers['content-type'] = `multipart/form-data; boundary=${boundary}`
       }
       body = form_body
