@@ -1,6 +1,6 @@
 import each from 'jest-each'
-import {EdgeBlob, EdgeRequest} from '../src'
-import {getType} from '../src/utils'
+import {EdgeBlob, EdgeRequest} from 'edge-mock'
+import {getType} from 'edge-mock/utils'
 
 interface TestType {
   input: any

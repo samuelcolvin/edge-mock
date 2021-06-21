@@ -1,5 +1,5 @@
-import {EdgeKVNamespace, EdgeReadableStream} from '../src'
-import {rsFromArray, rsToString} from '../src/utils'
+import {EdgeKVNamespace, EdgeReadableStream} from 'edge-mock'
+import {rsFromArray, rsToString} from 'edge-mock/utils'
 
 describe('EdgeKVNamespace', () => {
   test('get-value', async () => {

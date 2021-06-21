@@ -1,4 +1,4 @@
-import {EdgeFetchEvent, EdgeRequest} from '../src'
+import {EdgeFetchEvent, EdgeRequest} from 'edge-mock'
 
 describe('EdgeFetchEvent', () => {
   test('wrong-types', async () => {

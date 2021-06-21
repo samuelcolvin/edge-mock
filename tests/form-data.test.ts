@@ -1,5 +1,5 @@
-import {EdgeFormData, EdgeFile, EdgeBlob} from '../src'
-import {formDataAsString, stringAsFormData} from '../src/forms'
+import {EdgeFormData, EdgeFile, EdgeBlob} from 'edge-mock'
+import {formDataAsString, stringAsFormData} from 'edge-mock/forms'
 
 describe('EdgeFormData', () => {
   test('append', () => {

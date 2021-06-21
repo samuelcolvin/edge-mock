@@ -1,4 +1,4 @@
-import {makeEdgeEnv} from '../src'
+import {makeEdgeEnv} from 'edge-mock'
 
 async function handleRequest(event: FetchEvent) {
   const {request, type} = event

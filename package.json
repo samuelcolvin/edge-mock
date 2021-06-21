@@ -69,6 +69,10 @@
       "src/**/*.ts",
       "!src/server.ts"
     ],
+    "moduleNameMapper": {
+      "edge-mock/(.*)": "<rootDir>/src/$1",
+      "edge-mock": "<rootDir>/src"
+    },
     "preset": "ts-jest"
   },
   "prettier": {

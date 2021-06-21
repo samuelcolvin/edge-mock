@@ -1,5 +1,5 @@
-import {EdgeReadableStream} from '../src'
-import {rsFromArray, rsToArrayBufferView, rsToString} from '../src/utils'
+import {EdgeReadableStream} from 'edge-mock'
+import {rsFromArray, rsToArrayBufferView, rsToString} from 'edge-mock/utils'
 
 describe('EdgeReadableStream', () => {
   test('basic-string', async () => {

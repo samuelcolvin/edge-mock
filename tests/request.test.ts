@@ -1,5 +1,5 @@
-import {EdgeFile, EdgeFormData, EdgeReadableStream, EdgeRequest} from '../src'
-import {encode, rsToArrayBufferView} from '../src/utils'
+import {EdgeFile, EdgeFormData, EdgeReadableStream, EdgeRequest} from 'edge-mock'
+import {encode, rsToArrayBufferView} from 'edge-mock/utils'
 
 describe('EdgeRequest', () => {
   test('construct', async () => {

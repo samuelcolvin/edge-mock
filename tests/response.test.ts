@@ -1,5 +1,5 @@
-import {EdgeResponse, EdgeReadableStream, EdgeBlob, EdgeFormData, EdgeFile} from '../src'
-import {rsFromArray, rsToString} from '../src/utils'
+import {EdgeResponse, EdgeReadableStream, EdgeBlob, EdgeFormData, EdgeFile} from 'edge-mock'
+import {rsFromArray, rsToString} from 'edge-mock/utils'
 
 describe('EdgeResponse', () => {
   test('string', async () => {

@@ -1,6 +1,6 @@
-import stub_fetch from '../src/stub_fetch'
-import live_fetch from '../src/live_fetch'
-import {EdgeBlob, EdgeFile, EdgeFormData, EdgeRequest} from '../src/'
+import stub_fetch from 'edge-mock/stub_fetch'
+import live_fetch from 'edge-mock/live_fetch'
+import {EdgeBlob, EdgeFile, EdgeFormData, EdgeRequest} from 'edge-mock'
 
 describe('stub_fetch', () => {
   test('200', async () => {

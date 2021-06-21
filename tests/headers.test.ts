@@ -1,4 +1,4 @@
-import {EdgeHeaders} from '../src'
+import {EdgeHeaders} from 'edge-mock'
 
 describe('EdgeHeaders', () => {
   test('object', async () => {

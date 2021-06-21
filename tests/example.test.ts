@@ -1,4 +1,4 @@
-import {makeEdgeEnv} from '../src'
+import {makeEdgeEnv} from 'edge-mock'
 import {handleRequest} from './example'
 
 describe('handleRequest', () => {

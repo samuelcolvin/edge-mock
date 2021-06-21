@@ -1,6 +1,6 @@
 import each from 'jest-each'
-import {EdgeBlob, EdgeReadableStream} from '../src'
-import {rsToString} from '../src/utils'
+import {EdgeBlob, EdgeReadableStream} from 'edge-mock'
+import {rsToString} from 'edge-mock/utils'
 
 describe('EdgeBlob', () => {
   test('string', async () => {
