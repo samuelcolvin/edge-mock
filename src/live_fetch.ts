@@ -2,7 +2,7 @@ import node_fetch, {BodyInit} from 'node-fetch'
 import {rsToArrayBufferView} from './utils'
 import {EdgeFormData, EdgeResponse} from './models'
 import {check_method} from './models/Request'
-import {formDataAsMultipart} from './forms'
+import {formDataAsString} from './forms'
 import {asHeaders} from './models/Headers'
 
 export default async function (resource: string | URL, init: RequestInit | Request = {}): Promise<Response> {
@@ -25,7 +25,7 @@ export default async function (resource: string | URL, init: RequestInit | Reque
     } else if ('getReader' in init_body) {
       body = await rsToArrayBufferView(init_body)
     } else if (init_body instanceof EdgeFormData) {
-      const [boundary, form_body] = await formDataAsMultipart(init_body)
+      const [boundary, form_body] = await formDataAsString(init_body)
       if (headers['content-type'] == 'multipart/form-data') {
         headers['content-type'] = `multipart/form-data; boundary=${boundary}`
       }

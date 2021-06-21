@@ -62,7 +62,7 @@ function extract_headers(h: string): Headers {
   return headers
 }
 
-export async function formDataAsMultipart(form: FormData, boundary?: string): Promise<[string, string]> {
+export async function formDataAsString(form: FormData, boundary?: string): Promise<[string, string]> {
   boundary = boundary || generateBoundary()
   let s = ''
   for (const [key, value] of form) {

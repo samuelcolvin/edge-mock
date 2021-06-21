@@ -1,5 +1,5 @@
 import {getType, rsToString, rsToArrayBufferView, encode} from '../utils'
-import {formDataAsMultipart, stringAsFormData, generateBoundary} from '../forms'
+import {formDataAsString, stringAsFormData, generateBoundary} from '../forms'
 import {EdgeBlob} from './Blob'
 import {EdgeReadableStream} from './ReadableStream'
 import {EdgeFormData} from './FormData'
@@ -98,7 +98,7 @@ export class EdgeBody implements Body {
     } else if (body instanceof URLSearchParams) {
       return encode(body.toString())
     } else if (body instanceof EdgeFormData) {
-      const [_, form_body] = await formDataAsMultipart(body, this._formBoundary)
+      const [_, form_body] = await formDataAsString(body, this._formBoundary)
       return encode(form_body)
     } else {
       throw new TypeError(`${getType(body)}s are not supported as body types`)

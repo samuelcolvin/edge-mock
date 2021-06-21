@@ -1,5 +1,5 @@
 import {EdgeFormData, EdgeFile, EdgeBlob} from '../src'
-import {formDataAsMultipart, stringAsFormData} from '../src/forms'
+import {formDataAsString, stringAsFormData} from '../src/forms'
 
 describe('EdgeFormData', () => {
   test('append', () => {
@@ -132,7 +132,7 @@ describe('formDataAsMultipart', () => {
     const fd = new EdgeFormData()
     fd.append('foo', 'bar')
 
-    const [boundary, data] = await formDataAsMultipart(fd)
+    const [boundary, data] = await formDataAsString(fd)
     expect(boundary).toMatch(/^[a-z0-9]{32}$/)
     expect(data).toEqual(
       `--${boundary}\r\nContent-Disposition: form-data; name="foo"\r\n\r\nbar\r\n--${boundary}--\r\n`,
@@ -143,7 +143,7 @@ describe('formDataAsMultipart', () => {
     const fd = new EdgeFormData()
     fd.append('f\noo', 'bar')
 
-    const [boundary, data] = await formDataAsMultipart(fd)
+    const [boundary, data] = await formDataAsString(fd)
     expect(boundary).toMatch(/^[a-z0-9]{32}$/)
     expect(data).toEqual(
       `--${boundary}\r\nContent-Disposition: form-data; name="f%0Aoo"\r\n\r\nbar\r\n--${boundary}--\r\n`,
@@ -155,7 +155,7 @@ describe('formDataAsMultipart', () => {
     const file = new EdgeFile(['this is content'], 'foobar.txt')
     fd.append('foo', file)
 
-    const [boundary, data] = await formDataAsMultipart(fd)
+    const [boundary, data] = await formDataAsString(fd)
     expect(data).toEqual(
       `--${boundary}\r\n` +
         `Content-Disposition: form-data; name="foo"; filename="foobar.txt"\r\n\r\n` +
@@ -169,7 +169,7 @@ describe('formDataAsMultipart', () => {
     const file = new EdgeFile(['this is content'], 'foo"bar.txt', {type: 'text/plain'})
     fd.append('foo', file)
 
-    const [boundary, data] = await formDataAsMultipart(fd)
+    const [boundary, data] = await formDataAsString(fd)
     expect(data).toEqual(
       `--${boundary}\r\n` +
         `Content-Disposition: form-data; name="foo"; filename="foo%22bar.txt"\r\n` +
@@ -186,7 +186,7 @@ describe('stringAsFormData', () => {
     fd.append('foo', 'bar')
     fd.append('spam', 'ham')
 
-    const [boundary, body] = await formDataAsMultipart(fd)
+    const [boundary, body] = await formDataAsString(fd)
 
     const fd2 = stringAsFormData(boundary, body)
 
@@ -198,7 +198,7 @@ describe('stringAsFormData', () => {
     const file = new EdgeFile(['this is content'], 'foobar.txt')
     fd.append('foo', file)
 
-    const [boundary, body] = await formDataAsMultipart(fd)
+    const [boundary, body] = await formDataAsString(fd)
     const fd2 = stringAsFormData(boundary, body)
     expect([...fd2.keys()]).toStrictEqual(['foo'])
     const foo = fd2.get('foo') as EdgeFile
@@ -213,7 +213,7 @@ describe('stringAsFormData', () => {
     const file = new EdgeFile(['this is content', ' and some more'], 'foobar.txt', {type: 'text/plain'})
     fd.append('foo', file)
 
-    const [boundary, body] = await formDataAsMultipart(fd)
+    const [boundary, body] = await formDataAsString(fd)
     const fd2 = stringAsFormData(boundary, body)
     const foo = fd2.get('foo') as EdgeFile
     expect(foo).toBeInstanceOf(EdgeFile)
@@ -226,7 +226,7 @@ describe('stringAsFormData', () => {
     const fd = new EdgeFormData()
     fd.append('"foo"', 'apple\r\n"banana"\r\n\r\ncarrot\n\r\n')
 
-    const [boundary, body] = await formDataAsMultipart(fd)
+    const [boundary, body] = await formDataAsString(fd)
 
     const fd2 = stringAsFormData(boundary, body)
 
