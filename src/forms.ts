@@ -52,11 +52,11 @@ function extract_headers(h: string): Headers {
   const fn = h.match(/filename ?= ?"(.+?)"/)
   if (fn) {
     headers.filename = decodeURI(fn[1])
-  }
 
-  const ct = h.match(/\r\nContent-Type: ?(.+)/)
-  if (ct) {
-    headers.type = decodeURI(ct[1])
+    const ct = h.match(/\r\nContent-Type: ?(.+)/)
+    if (ct) {
+      headers.type = decodeURI(ct[1])
+    }
   }
 
   return headers
