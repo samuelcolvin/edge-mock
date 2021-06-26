@@ -14,10 +14,9 @@ export interface Config {
   dist_assets_path: string
   prepare_key: (f: string) => string
   livereload: boolean
+  livereload_port: number
   port: number
 }
-
-const livereload_port = 35729
 
 declare const global: any
 
@@ -42,6 +41,7 @@ async function load_config(): Promise<Config> {
   if (!('livereload' in config)) {
     config.livereload = true
   }
+  config.livereload_port = config.livereload_port || 35729
 
   return config as Config
 }
@@ -123,9 +123,12 @@ function on_internal_error(res: ExpressResponse, message: string, error: Error, 
 function run_server(config: Config, env: EdgeEnv, webpack_state: WebpackState) {
   const app = express()
   if (config.livereload) {
-    const reload_server = livereload.createServer({delay: 300, port: livereload_port})
+    const reload_server = livereload.createServer({delay: 300, port: config.livereload_port})
     reload_server.watch(path.dirname(config.dist_path))
   }
+  const reload_html = encode(
+    `\n\n<script src="http://localhost:${config.livereload_port}/livereload.js?snipver=1"></script>\n`,
+  )
 
   app.all(/.*/, (req, res) => {
     if (webpack_state.error) {
@@ -151,15 +154,11 @@ function run_server(config: Config, env: EdgeEnv, webpack_state: WebpackState) {
           res.status(response.status)
           res.set(Object.fromEntries(response.headers.entries()))
           response.arrayBuffer().then(ab => {
-            if ((response.headers.get('content-type') || '').includes('text/html')) {
-              const body = [
-                new Uint8Array(ab),
-                encode(`\n\n<script src="http://localhost:${livereload_port}/livereload.js?snipver=1"></script>\n`),
-              ]
-              res.send(Buffer.from(catArraysBufferViews(body)))
-            } else {
-              res.send(Buffer.from(ab))
+            let body: Uint8Array | ArrayBuffer = ab
+            if (config.livereload && (response.headers.get('content-type') || '').includes('text/html')) {
+              body = catArraysBufferViews([new Uint8Array(ab), reload_html])
             }
+            res.send(Buffer.from(body))
           })
         })
         .catch(err => on_internal_error(res, 'Internal Error awaiting response promise', err))
