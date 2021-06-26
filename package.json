@@ -87,6 +87,7 @@
   "dependencies": {
     "@cloudflare/workers-types": "^2.2.2",
     "express": "^4.17.1",
+    "livereload": "^0.9.3",
     "node-fetch": "^2.6.1"
   },
   "peerDependencies": {
@@ -95,6 +96,7 @@
   "devDependencies": {
     "@types/express": "^4.17.12",
     "@types/jest": "^26.0.23",
+    "@types/livereload": "^0.9.0",
     "@types/node-fetch": "^2.5.10",
     "@typescript-eslint/eslint-plugin": "^4.16.1",
     "@typescript-eslint/parser": "^4.16.1",
