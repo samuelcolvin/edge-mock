@@ -24,6 +24,11 @@ all: lint testcov
 build:
 	yarn prepublishOnly
 
+.PHONY: build-pack
+build-pack: build
+	npm pack
+	make clean
+
 .PHONY: clean
 clean:
 	rm -rf coverage

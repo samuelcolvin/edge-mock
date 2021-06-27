@@ -45,6 +45,17 @@ describe('makeEdgeEnv', () => {
     expect(() => addEventListener('foobar', null as any)).toThrow('only "fetch" events are supported, not "foobar"')
   })
 
+  test('clearEventListener', async () => {
+    const env = makeEdgeEnv()
+
+    env.addEventListener('fetch', e => {
+      e.respondWith(handleRequest(e))
+    })
+    expect(env.getListener()).toBeInstanceOf(Function)
+    env.clearEventListener()
+    expect(() => env.getListener()).toThrow('FetchEvent listener not yet added via addEventListener')
+  })
+
   test('dispatch-no-listener', async () => {
     const env = makeEdgeEnv()
     const event = new FetchEvent('fetch', {request: new Request('/bar/')})
