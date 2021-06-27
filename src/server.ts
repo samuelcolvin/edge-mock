@@ -85,39 +85,133 @@ async function start_webpack(config: Config): Promise<[EdgeEnv, WebpackState]> {
 
     await kv_namespace._add_files(config.dist_assets_path, config.prepare_key)
     global.__STATIC_CONTENT_MANIFEST = kv_namespace._manifestJson()
+    env.clearEventListener()
     try {
       await import(config.dist_path)
-      webpack_state.clearError()
     } catch (err) {
-      // console.error(`Error importing ${path.relative('.', config.dist_path)}:\n`, e)
       webpack_state.setError(err)
+      return
     }
+    webpack_state.clearError()
   }
 
-  async function on_webpack_failure(err: Error): Promise<void> {
-    console.error(err)
-    webpack_state.setError(err)
-  }
-
-  const watch_promise: Promise<void> = new Promise(resolve => {
-    webpack(wp_config.default).watch({}, (err, stats) => {
-      if (err) {
-        on_webpack_failure(err).then(() => resolve())
-      } else {
-        on_webpack_success(stats as MultiStats).then(() => resolve())
-      }
-    })
+  webpack(wp_config.default).watch({}, (err, stats) => {
+    if (err) {
+      console.error(err)
+      webpack_state.setError(err)
+    } else {
+      on_webpack_success(stats as MultiStats)
+    }
   })
 
-  await watch_promise
   return [env, webpack_state]
 }
 
-function on_internal_error(res: ExpressResponse, message: string, error: Error, status = 504) {
-  console.error(message, error)
-  res.status(status)
-  res.set({'content-type': 'text/plain'})
-  res.send(`${message}:\n\n${error.message}\n${error.stack}\n`)
+function livereload_script(config: Config): string {
+  if (config.livereload) {
+    return `\n\n<script src="http://localhost:${config.livereload_port}/livereload.js?snipver=1"></script>\n`
+  } else {
+    return ''
+  }
+}
+
+class ErrorResponse {
+  protected readonly response: ExpressResponse
+  protected readonly config: Config
+  protected readonly html_template = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{status} Error</title>
+    <meta name="description" content="{message}" />
+    <style>
+      body {
+        display: flex;
+        color: #24292e;
+        justify-content: center;
+        margin: 40px 10px 60px;
+        font-size: 16px;
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, 
+          "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      }
+      main {
+        width: min(calc(100vw - 20px), 902px);
+        box-sizing: border-box;
+        border: 1px solid #e1e4e8;
+        border-radius: 6px;
+        padding: 20px 15px 20px;
+        word-wrap: break-word;
+        min-height: 400px;
+      }
+      aside {
+        font-size: 0.9rem;
+        color: #666;
+      }
+      pre code {
+        font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
+        background: #f6f8fa;
+        border-radius: 6px;
+        padding: 16px;
+        overflow: auto;
+        font-size: 85%;
+        line-height: 1.45;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Error</h1>
+      <p><b>{message}</b></p>
+      {detail}
+      <h2>Config:</h2>
+      <pre><code>{config}</code></pre>
+      <aside>
+        (This page is shown by 
+        <a href="https://github.com/samuelcolvin/edge-mock#development-server" target="_blank">edge-mock-server</a>, 
+        it's a summary of an error that occurred while trying to serve the above web-worker application.)
+      </aside>
+    </main>
+  </body>
+</html>{livereload}
+`
+
+  constructor(response: ExpressResponse, config: Config) {
+    this.response = response
+    this.config = config
+  }
+
+  onError(message: string, error?: Error, status = 502): void {
+    this.response.status(status)
+    this.response.set({'content-type': 'text/html'})
+    const context: Record<string, string> = {
+      message: this.escape(message),
+      status: status.toString(),
+      detail: '',
+      livereload: livereload_script(this.config),
+      config: this.escape(JSON.stringify(this.config, null, 2)),
+    }
+
+    if (error) {
+      const stack = error.stack?.toString().replace(/\n.*(\/express\/lib\/|edge-mock\/server)(.|\n)*/, '')
+      context.detail = `<pre><code>${this.escape(error.message)}\n${this.escape(stack || '')}</code></pre>`
+      console.error(`${message}\n${error.message}\n${stack || ''}`)
+    } else {
+      console.error(message)
+    }
+
+    let html = this.html_template
+    for (const [key, value] of Object.entries(context)) {
+      html = html.replace(new RegExp(`{${key}}`, 'g'), value)
+    }
+    this.response.send(html)
+  }
+
+  protected escape(s: string): string {
+    const html_tags: Record<string, string> = {'&': '&amp;', '<': '&lt;', '>': '&gt;'}
+    return s.replace(/[&<>]/g, letter => html_tags[letter] || letter)
+  }
 }
 
 function run_server(config: Config, env: EdgeEnv, webpack_state: WebpackState) {
@@ -126,13 +220,12 @@ function run_server(config: Config, env: EdgeEnv, webpack_state: WebpackState) {
     const reload_server = livereload.createServer({delay: 300, port: config.livereload_port})
     reload_server.watch(path.dirname(config.dist_path))
   }
-  const reload_html = encode(
-    `\n\n<script src="http://localhost:${config.livereload_port}/livereload.js?snipver=1"></script>\n`,
-  )
+  const reload_html = encode(livereload_script(config))
 
   app.all(/.*/, (req, res) => {
+    const error_handler = new ErrorResponse(res, config)
     if (webpack_state.error) {
-      on_internal_error(res, 'Failed to load worker code', webpack_state.error)
+      error_handler.onError('Failed to load worker code', webpack_state.error)
       return
     }
 
@@ -140,7 +233,7 @@ function run_server(config: Config, env: EdgeEnv, webpack_state: WebpackState) {
     try {
       listener = env.getListener()
     } catch (err) {
-      on_internal_error(res, 'Error getting FetchEvent listener', err)
+      error_handler.onError(err.message)
       return
     }
 
@@ -161,13 +254,13 @@ function run_server(config: Config, env: EdgeEnv, webpack_state: WebpackState) {
             res.send(Buffer.from(body))
           })
         })
-        .catch(err => on_internal_error(res, 'Internal Error awaiting response promise', err))
+        .catch(err => error_handler.onError('Internal Error awaiting response promise', err))
     }
 
     try {
-      Promise.resolve(listener(event)).catch(err => on_internal_error(res, 'Internal Error running web-worker', err))
+      Promise.resolve(listener(event)).catch(err => error_handler.onError('Internal Error running web-worker', err))
     } catch (err) {
-      on_internal_error(res, 'Internal Error running web-worker', err)
+      error_handler.onError('Internal Error running web-worker', err)
     }
   })
 

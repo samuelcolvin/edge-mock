@@ -50,6 +50,10 @@ export class EdgeEnv {
     this.listener = listener
   }
 
+  clearEventListener(): void {
+    this.listener = null
+  }
+
   dispatchEvent(event: FetchEvent): void {
     if (this.listener) {
       this.listener(event)
