@@ -129,15 +129,12 @@ function livereload_script(config: Config): string {
 }
 
 class ErrorResponse {
-  protected readonly response: ExpressResponse
-  protected readonly config: Config
   protected readonly html_template = `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{status} Error</title>
-    <meta name="description" content="{message}" />
     <style>
       body {
         display: flex;
@@ -183,12 +180,14 @@ class ErrorResponse {
       <aside>
         (This page is shown by 
         <a href="https://github.com/samuelcolvin/edge-mock#development-server" target="_blank">edge-mock-server</a>, 
-        it's a summary of an error that occurred while trying to serve the above web-worker application.)
+        it's a summary of an error that occurred while trying to serve the above service-worker application.)
       </aside>
     </main>
   </body>
 </html>{livereload}
 `
+  protected readonly response: ExpressResponse
+  protected readonly config: Config
 
   constructor(response: ExpressResponse, config: Config) {
     this.response = response
@@ -267,13 +266,13 @@ function run_server(config: Config, env: EdgeEnv, webpack_state: WebpackState) {
             res.send(Buffer.from(body))
           })
         })
-        .catch(err => error_handler.onError('Internal Error awaiting response promise', err))
+        .catch(err => error_handler.onError('Error awaiting response promise', err))
     }
 
     try {
-      Promise.resolve(listener(event)).catch(err => error_handler.onError('Internal Error running web-worker', err))
+      Promise.resolve(listener(event)).catch(err => error_handler.onError('Error awaiting service-worker', err))
     } catch (err) {
-      error_handler.onError('Internal Error running web-worker', err)
+      error_handler.onError('Error running service-worker', err)
     }
   })
 
