@@ -5,6 +5,7 @@ describe('EdgeResponse', () => {
   test('string', async () => {
     const response = new EdgeResponse('abc')
     expect(response.status).toStrictEqual(200)
+    expect(response.headers.get('content-type')).toEqual('text/plain')
     expect(response.statusText).toStrictEqual('')
     expect(response.type).toStrictEqual('default')
     expect(response.bodyUsed).toStrictEqual(false)
@@ -24,6 +25,7 @@ describe('EdgeResponse', () => {
     const blob = new EdgeBlob([new Uint8Array([97, 98, 99])])
     const response = new EdgeResponse(blob)
     expect(await response.text()).toEqual('abc')
+    expect(response.headers.get('content-type')).toEqual(null)
   })
 
   test('blob-arrayBuffer', async () => {

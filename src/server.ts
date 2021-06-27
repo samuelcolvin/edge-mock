@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 
 import path from 'path'
+import fs from 'fs'
 import express, {Response as ExpressResponse} from 'express'
 import webpack from 'webpack'
 import livereload from 'livereload'
 import {makeEdgeEnv, EdgeKVNamespace, EdgeEnv} from './index'
 import live_fetch from './live_fetch'
-import {catArraysBufferViews, encode} from 'edge-mock/utils'
+import {catArraysBufferViews, encode} from './utils'
 
 export interface Config {
   webpack_config: string
@@ -22,14 +23,25 @@ declare const global: any
 
 const default_prepare_key = (f: string) => f.replace(/.*?dist\/assets\//, '')
 
+function pathExists(path: string): Promise<boolean> {
+  return fs.promises
+    .access(path, fs.constants.F_OK)
+    .then(() => true)
+    .catch(() => false)
+}
+
 async function load_config(): Promise<Config> {
   const cwd = process.cwd()
   const dev_server_config = path.join(cwd, 'edge-mock-config.js')
   let config: Record<string, any> = {}
-  try {
-    config = await import(dev_server_config)
-    console.log('edge-mock-config.js found, using it for config')
-  } catch (e) {
+  if (await pathExists(dev_server_config)) {
+    try {
+      config = await import(dev_server_config)
+      console.log('edge-mock-config.js found, using it for config')
+    } catch (e) {
+      console.error('error loading', dev_server_config, e)
+    }
+  } else {
     console.log('edge-mock-config.js not found, using default config')
   }
 
@@ -67,24 +79,24 @@ class WebpackState {
 }
 
 async function start_webpack(config: Config): Promise<[EdgeEnv, WebpackState]> {
-  const kv_namespace = new EdgeKVNamespace()
+  let static_content_kv: EdgeKVNamespace
 
-  const global_extra = {
-    __STATIC_CONTENT: kv_namespace,
-    __STATIC_CONTENT_MANIFEST: '{}',
-    fetch: live_fetch,
-  }
-  const env = makeEdgeEnv(global_extra)
+  const env = makeEdgeEnv({fetch: live_fetch})
   const webpack_state = new WebpackState()
-
-  const wp_config = await import(config.webpack_config)
 
   async function on_webpack_success(stats: MultiStats): Promise<void> {
     console.log(stats.toString('minimal'))
     delete require.cache[require.resolve(config.dist_path)]
 
-    await kv_namespace._add_files(config.dist_assets_path, config.prepare_key)
-    global.__STATIC_CONTENT_MANIFEST = kv_namespace._manifestJson()
+    if (await pathExists(config.dist_assets_path)) {
+      if (!static_content_kv) {
+        static_content_kv = new EdgeKVNamespace()
+        global.__STATIC_CONTENT = static_content_kv
+        console.log('adding KV store "__STATIC_CONTENT" to global namespace')
+      }
+      await static_content_kv._add_files(config.dist_assets_path, config.prepare_key)
+      global.__STATIC_CONTENT_MANIFEST = static_content_kv._manifestJson()
+    }
     env.clearEventListener()
     try {
       await import(config.dist_path)
@@ -95,6 +107,7 @@ async function start_webpack(config: Config): Promise<[EdgeEnv, WebpackState]> {
     webpack_state.clearError()
   }
 
+  const wp_config = await import(config.webpack_config)
   webpack(wp_config.default).watch({}, (err, stats) => {
     if (err) {
       console.error(err)

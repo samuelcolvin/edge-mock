@@ -18,6 +18,9 @@ export class EdgeResponse extends EdgeBody implements Response {
     const headers = asHeaders(init.headers)
     const boundary = findBoundary(headers, body)
     super(body, boundary)
+    if (typeof body == 'string' && !headers.has('content-type')) {
+      headers.set('content-type', 'text/plain')
+    }
     this.headers = headers
     this.status = init.status === undefined ? 200 : init.status
     this.ok = this.status >= 200 && this.status < 300
