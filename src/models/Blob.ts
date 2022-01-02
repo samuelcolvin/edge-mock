@@ -3,6 +3,19 @@ import {encode, decode, catArraysBufferViews} from '../utils'
 import {BlobOptions} from 'buffer'
 import {EdgeReadableStream} from './ReadableStream'
 
+type BufferSource = ArrayBufferView | ArrayBuffer
+type BlobPart = BufferSource | Blob | string
+type EndingType = "native" | "transparent"
+
+interface BlobPropertyBag {
+    endings?: EndingType
+    type?: string
+}
+
+interface FilePropertyBag extends BlobPropertyBag {
+    lastModified?: number
+}
+
 export class EdgeBlob implements Blob {
   readonly type: string
   protected readonly _parts: BlobPart[]

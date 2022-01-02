@@ -3,6 +3,7 @@ import {EdgeBody, findBoundary} from './Body'
 import {asHeaders} from './Headers'
 
 const RedirectStatuses: Set<number> = new Set([301, 302, 303, 307, 308])
+type ResponseType = "basic" | "cors" | "default" | "error" | "opaque" | "opaqueredirect"
 
 export class EdgeResponse extends EdgeBody implements Response {
   readonly status: number
@@ -13,6 +14,7 @@ export class EdgeResponse extends EdgeBody implements Response {
   readonly type: ResponseType = 'default'
   readonly url: string
   readonly _extra?: any
+  readonly webSocket: WebSocket | null = null
 
   constructor(body?: BodyInit | null, init: ResponseInit = {}, url = 'https://example.com', extra?: any) {
     const headers = asHeaders(init.headers)

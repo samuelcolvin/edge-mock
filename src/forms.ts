@@ -56,6 +56,7 @@ export async function formDataAsString(form: FormData, boundary?: string): Promi
   boundary = boundary || generateBoundary()
   let s = ''
   for (const [key, value] of form) {
+    // @ts-ignore
     s += await multipartSection(boundary, key, value)
   }
   return [boundary, `${s}--${boundary}--\r\n`]
@@ -65,7 +66,7 @@ export const generateBoundary = () => [...Array(32)].map(randChar).join('')
 const characters = 'abcdefghijklmnopqrstuvwxyz0123456789'
 const randChar = () => characters.charAt(Math.floor(Math.random() * characters.length))
 
-async function multipartSection(boundary: string, key: string, value: FormDataEntryValue): Promise<string> {
+async function multipartSection(boundary: string, key: string, value: File | string): Promise<string> {
   let header = `Content-Disposition: form-data; name="${encodeURI(key)}"`
   let body: string
   if (typeof value == 'string') {

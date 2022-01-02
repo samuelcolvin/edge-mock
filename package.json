@@ -85,7 +85,7 @@
     "arrowParens": "avoid"
   },
   "dependencies": {
-    "@cloudflare/workers-types": "^2.2.2",
+    "@cloudflare/workers-types": "3.3.0",
     "express": "^4.17.1",
     "livereload": "^0.9.3",
     "node-fetch": "^2.6.1"

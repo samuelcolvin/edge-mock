@@ -3,7 +3,7 @@
     "outDir": ".",
     "module": "commonjs",
     "target": "esnext",
-    "lib": ["esnext", "webworker"],
+    "lib": ["esnext"],
     "alwaysStrict": true,
     "strict": true,
     "preserveConstEnums": true,
@@ -12,6 +12,7 @@
     "esModuleInterop": true,
     "declaration": true,
     "baseUrl": "src",
+    "skipLibCheck": true,
     "paths": {
       "edge-mock": [""],
       "edge-mock/*": ["*"]

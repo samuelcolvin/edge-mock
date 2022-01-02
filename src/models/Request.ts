@@ -10,6 +10,12 @@ const DEFAULT_HEADERS = {
 const MethodStrings = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'] as const
 export type Method = typeof MethodStrings[number]
 
+type RequestMode = "cors" | "navigate" | "no-cors" | "same-origin"
+type RequestCredentials = "include" | "omit" | "same-origin"
+type RequestCache = "default" | "force-cache" | "no-cache" | "no-store" | "only-if-cached" | "reload"
+type RequestDestination = "" | "audio" | "audioworklet" | "document" | "embed" | "font" | "image" | "manifest" | "object" | "paintworklet" | "report" | "script" | "sharedworker" | "style" | "track" | "video" | "worker" | "xslt"
+type ReferrerPolicy = "" | "no-referrer" | "no-referrer-when-downgrade" | "origin" | "origin-when-cross-origin" | "same-origin" | "strict-origin" | "strict-origin-when-cross-origin" | "unsafe-url"
+
 export class EdgeRequest extends EdgeBody implements Request {
   readonly url: string
   readonly method: Method
@@ -21,13 +27,14 @@ export class EdgeRequest extends EdgeBody implements Request {
   readonly integrity: string
   readonly headers: Headers
   readonly cf: IncomingRequestCfProperties
+  readonly fetcher: Fetcher | null
   readonly destination: RequestDestination = ''
   readonly isHistoryNavigation = false
   readonly isReloadNavigation = false
   readonly keepalive = false
   readonly referrerPolicy: ReferrerPolicy = ''
 
-  constructor(input: RequestInfo, init?: RequestInit) {
+  constructor(input: Request | string, init?: RequestInit) {
     let url: string
     if (typeof input == 'string') {
       url = input || '/'

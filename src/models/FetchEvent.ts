@@ -1,3 +1,15 @@
+
+interface FetchEventInit {
+    bubbles?: boolean
+    cancelable?: boolean
+    composed?: boolean
+    clientId?: string
+    preloadResponse?: Promise<any>
+    replacesClientId?: string
+    request: Request
+    resultingClientId?: string
+}
+
 export class EdgeFetchEvent implements FetchEvent {
   readonly type: 'fetch'
   readonly request: Request
@@ -47,7 +59,7 @@ export class EdgeFetchEvent implements FetchEvent {
     return undefined as any
   }
   /* istanbul ignore next */
-  get currentTarget(): EventTarget | null {
+  get currentTarget(): EventTarget | undefined {
     return undefined as any
   }
   /* istanbul ignore next */
@@ -63,7 +75,7 @@ export class EdgeFetchEvent implements FetchEvent {
     return undefined as any
   }
   /* istanbul ignore next */
-  get srcElement(): EventTarget | null {
+  get srcElement(): EventTarget | undefined {
     return undefined as any
   }
   /* istanbul ignore next */
