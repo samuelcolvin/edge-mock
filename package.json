@@ -17,7 +17,8 @@
     "edge-mock-server": "./server.js"
   },
   "scripts": {
-    "prepublishOnly": "tsc -b tsconfig.build.json",
+    "build": "tsc -b tsconfig.build.json",
+    "prepublishOnly": "yarn build",
     "postpublish": "make clean",
     "format": "prettier --write '**/*.{json,js,ts}'",
     "lint": "eslint --max-warnings=0 src tests && prettier --check '**/*.{json,js,ts}'",
@@ -85,7 +86,7 @@
     "arrowParens": "avoid"
   },
   "dependencies": {
-    "@cloudflare/workers-types": "^2.2.2",
+    "@cloudflare/workers-types": "^3.4.0",
     "express": "^4.17.1",
     "livereload": "^0.9.3",
     "node-fetch": "^2.6.1"

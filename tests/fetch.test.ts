@@ -49,7 +49,7 @@ describe('live_fetch', () => {
     const body = 'this is a test'
     const r = await live_fetch('https://httpbin.org/post', {method: 'POST', body, headers: {foo: 'bar'}})
     expect(r.status).toEqual(200)
-    const obj = await r.json()
+    const obj = (await r.json()) as any
     expect(obj.headers['Foo']).toEqual('bar')
     expect(obj.data).toEqual(body)
   })
@@ -58,7 +58,7 @@ describe('live_fetch', () => {
     const body = new EdgeBlob(['foo', 'bar'])
     const r = await live_fetch('https://httpbin.org/post', {method: 'POST', body})
     expect(r.status).toEqual(200)
-    const obj = await r.json()
+    const obj = (await r.json()) as any
     // console.log(obj)
     expect(obj.data).toEqual('foobar')
   })
@@ -67,7 +67,7 @@ describe('live_fetch', () => {
     const request = new EdgeRequest('https://www.example.com', {method: 'POST', body: 'abc'})
     const r = await live_fetch('https://httpbin.org/post', request)
     expect(r.status).toEqual(200)
-    const obj = await r.json()
+    const obj = (await r.json()) as any
     expect(obj.data).toEqual('abc')
   })
 
@@ -75,7 +75,7 @@ describe('live_fetch', () => {
     const body = new Uint8Array([100, 101, 102])
     const r = await live_fetch('https://httpbin.org/post', {method: 'POST', body})
     expect(r.status).toEqual(200)
-    const obj = await r.json()
+    const obj = (await r.json()) as any
     expect(obj.data).toEqual('def')
   })
 
@@ -87,7 +87,7 @@ describe('live_fetch', () => {
     const headers = {'content-type': 'multipart/form-data'}
     const r = await live_fetch('https://httpbin.org/post', {method: 'POST', body, headers})
     expect(r.status).toEqual(200)
-    const obj = await r.json()
+    const obj = (await r.json()) as any
     expect(obj.files).toEqual({foo: 'this is content'})
     expect(obj.form).toEqual({spam: 'ham'})
     expect(obj.headers['Content-Type']).toMatch(/multipart\/form-data; boundary=[a-z0-9]{32}/)

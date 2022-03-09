@@ -116,3 +116,12 @@ async function partToArrayBufferView(part: BlobPart): Promise<ArrayBufferView> {
     return new Uint8Array(await part.arrayBuffer())
   }
 }
+
+type BufferSource = ArrayBufferView | ArrayBuffer
+type BlobPart = BufferSource | Blob | string
+
+interface FilePropertyBag {
+  endings?: 'native' | 'transparent'
+  type?: string
+  lastModified?: number
+}

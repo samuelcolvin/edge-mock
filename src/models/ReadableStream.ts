@@ -1,8 +1,8 @@
-export class EdgeReadableStream<R = string | Uint8Array | ArrayBuffer> implements ReadableStream {
-  protected readonly _internals: StreamInternals<R>
+export class EdgeReadableStream implements ReadableStream {
+  protected readonly _internals: StreamInternals
 
-  constructor(underlyingSource?: UnderlyingSource<R>, strategy?: QueuingStrategy<R>) {
-    this._internals = new StreamInternals<R>(underlyingSource, strategy || {})
+  constructor(underlyingSource?: UnderlyingSource, strategy?: QueuingStrategy) {
+    this._internals = new StreamInternals(underlyingSource, strategy || {})
   }
 
   get locked(): boolean {
@@ -13,31 +13,41 @@ export class EdgeReadableStream<R = string | Uint8Array | ArrayBuffer> implement
     return this._internals.cancel(reason)
   }
 
-  getReader({mode}: {mode?: 'byob'} = {}): ReadableStreamDefaultReader<R> {
-    if (mode) {
+  getReader(options: ReadableStreamGetReaderOptions): ReadableStreamBYOBReader
+  getReader(): ReadableStreamDefaultReader
+  getReader(options?: ReadableStreamGetReaderOptions): ReadableStreamBYOBReader | ReadableStreamDefaultReader {
+    if (options) {
       throw new TypeError('ReadableStream modes other than default are not supported')
     }
     this._internals.acquireLock()
     return new EdgeReadableStreamDefaultReader(this._internals)
   }
 
-  pipeThrough<T>(_transform: ReadableWritablePair<T, R>, _options?: StreamPipeOptions): ReadableStream<T> {
+  pipeThrough<T>(transform: ReadableStreamTransform, options?: StreamPipeOptions): ReadableStream {
     throw new Error('pipeThrough not yet implemented')
   }
 
-  pipeTo(_dest: WritableStream<R>, _options?: StreamPipeOptions): Promise<void> {
+  pipeTo(_dest: WritableStream, _options?: StreamPipeOptions): Promise<void> {
     throw new Error('pipeTo not yet implemented')
   }
 
-  tee(): [ReadableStream<R>, ReadableStream<R>] {
+  tee(): [ReadableStream, ReadableStream] {
     return this._internals.tee()
+  }
+
+  values(options?: ReadableStreamValuesOptions): AsyncIterableIterator<ReadableStreamReadResult> {
+    return 'TODO' as any
+  }
+
+  [Symbol.asyncIterator](options?: ReadableStreamValuesOptions): AsyncIterableIterator<ReadableStreamReadResult> {
+    return 'TODO' as any
   }
 }
 
-class StreamInternals<R> {
-  protected readonly _source?: UnderlyingSource<R>
-  protected readonly _chunks: R[]
-  protected readonly _controller: EdgeReadableStreamDefaultController<R>
+class StreamInternals {
+  protected readonly _source?: UnderlyingSource
+  protected readonly _chunks: ChunkType[]
+  protected readonly _controller: EdgeReadableStreamDefaultController
   protected readonly _on_done_resolvers: Set<BasicCallback> = new Set()
   protected _closed = false
   protected _done = false
@@ -46,7 +56,7 @@ class StreamInternals<R> {
   protected _start_promise: any = null
   protected _highWaterMark: number
 
-  constructor(source?: UnderlyingSource<R>, {highWaterMark, size}: QueuingStrategy<R> = {}) {
+  constructor(source?: UnderlyingSource, {highWaterMark, size}: QueuingStrategy = {}) {
     this._source = source
     if (source?.type) {
       throw new Error('UnderlyingSource.type is not yet supported')
@@ -56,7 +66,7 @@ class StreamInternals<R> {
       throw new Error('TODO call size')
     }
     this._chunks = []
-    this._controller = new EdgeReadableStreamDefaultController<R>(this)
+    this._controller = new EdgeReadableStreamDefaultController(this)
     if (this._source?.start) {
       this._start_promise = this._source.start(this._controller)
     }
@@ -93,7 +103,7 @@ class StreamInternals<R> {
     this._closed = true
   }
 
-  enqueue(chunk: R): void {
+  enqueue(chunk: ChunkType): void {
     this._chunks.push(chunk)
   }
 
@@ -113,7 +123,7 @@ class StreamInternals<R> {
     return {done: true, value: undefined}
   }
 
-  async read(): Promise<ReadableStreamDefaultReadResult<R>> {
+  async read(): Promise<ReadableStreamDefaultReadResult> {
     if (this._done) {
       return {done: true, value: undefined}
     }
@@ -136,10 +146,10 @@ class StreamInternals<R> {
     }
   }
 
-  tee(): [ReadableStream<R>, ReadableStream<R>] {
+  tee(): [ReadableStream, ReadableStream] {
     this.acquireLock()
-    const chunks1: R[] = [...this._chunks]
-    const chunks2: R[] = [...this._chunks]
+    const chunks1: ChunkType[] = [...this._chunks]
+    const chunks2: ChunkType[] = [...this._chunks]
     const start = async () => {
       const p = this._start_promise
       if (p) {
@@ -147,7 +157,7 @@ class StreamInternals<R> {
         await p
       }
     }
-    const pull = async (controller: ReadableStreamController<R>, which: 1 | 2): Promise<void> => {
+    const pull = async (controller: ReadableStreamController, which: 1 | 2): Promise<void> => {
       const {value} = await this.read()
       if (value) {
         chunks1.push(value)
@@ -161,7 +171,7 @@ class StreamInternals<R> {
         controller.enqueue(next)
       }
     }
-    const cancel = async (controller: ReadableStreamController<R>): Promise<void> => {
+    const cancel = async (controller: ReadableStreamController): Promise<void> => {
       this.cancel()
       const c = this._source?.cancel
       if (c) {
@@ -170,12 +180,12 @@ class StreamInternals<R> {
       }
     }
 
-    const source1: UnderlyingSource<R> = {
+    const source1: UnderlyingSource = {
       start: () => start(),
       pull: controller => pull(controller, 1),
       cancel: controller => cancel(controller),
     }
-    const source2: UnderlyingSource<R> = {
+    const source2: UnderlyingSource = {
       start: () => start(),
       pull: controller => pull(controller, 2),
       cancel: controller => cancel(controller),
@@ -184,11 +194,11 @@ class StreamInternals<R> {
   }
 }
 
-class EdgeReadableStreamDefaultController<R> implements ReadableStreamDefaultController {
+class EdgeReadableStreamDefaultController implements ReadableStreamDefaultController {
   readonly desiredSize: number | null = null
-  protected readonly _internals: StreamInternals<R>
+  protected readonly _internals: StreamInternals
 
-  constructor(internals: StreamInternals<R>) {
+  constructor(internals: StreamInternals) {
     this._internals = internals
   }
 
@@ -196,7 +206,7 @@ class EdgeReadableStreamDefaultController<R> implements ReadableStreamDefaultCon
     this._internals.close()
   }
 
-  enqueue(chunk: R): void {
+  enqueue(chunk: ChunkType): void {
     this._internals.enqueue(chunk)
   }
 
@@ -207,11 +217,11 @@ class EdgeReadableStreamDefaultController<R> implements ReadableStreamDefaultCon
 
 type BasicCallback = () => void
 
-class EdgeReadableStreamDefaultReader<R> implements ReadableStreamDefaultReader {
-  protected readonly _internals: StreamInternals<R>
+class EdgeReadableStreamDefaultReader implements ReadableStreamDefaultReader {
+  protected readonly _internals: StreamInternals
   protected readonly _closed_promise: Promise<undefined>
 
-  constructor(internals: StreamInternals<R>) {
+  constructor(internals: StreamInternals) {
     this._internals = internals
     this._closed_promise = new Promise(resolve => {
       internals.addResolver(() => resolve(undefined))
@@ -222,7 +232,7 @@ class EdgeReadableStreamDefaultReader<R> implements ReadableStreamDefaultReader 
     return this._closed_promise
   }
 
-  async read(): Promise<ReadableStreamDefaultReadResult<R>> {
+  async read(): Promise<ReadableStreamReadResult> {
     return this._internals.read()
   }
 
@@ -234,3 +244,56 @@ class EdgeReadableStreamDefaultReader<R> implements ReadableStreamDefaultReader 
     this._internals.releaseLock()
   }
 }
+
+type ChunkType = string | Uint8Array | ArrayBuffer | ArrayBufferView
+
+interface UnderlyingSourceCancelCallback {
+  (reason: any): void | PromiseLike<void>
+}
+
+interface ReadableStreamController {
+  readonly desiredSize: number | null
+  close(): void
+  enqueue(chunk: ChunkType): void
+  error(e?: any): void
+}
+
+interface UnderlyingSourcePullCallback {
+  (controller: ReadableStreamController): void | PromiseLike<void>
+}
+
+interface UnderlyingSourceStartCallback {
+  (controller: ReadableStreamController): void | PromiseLike<void>
+}
+
+interface UnderlyingSource {
+  cancel?: UnderlyingSourceCancelCallback
+  pull?: UnderlyingSourcePullCallback
+  start?: UnderlyingSourceStartCallback
+  type?: undefined
+}
+
+interface QueuingStrategySize {
+  (chunk: ChunkType): number
+}
+
+interface QueuingStrategy {
+  highWaterMark?: number
+  size?: QueuingStrategySize
+}
+
+interface ReadableStreamTransform {
+  writable: WritableStream
+  readable: ReadableStream
+}
+
+interface ReadableStreamDefaultReadDoneResult {
+  done: true
+  value?: undefined
+}
+
+interface ReadableStreamDefaultReadValueResult {
+  done: false
+  value: ChunkType
+}
+type ReadableStreamDefaultReadResult = ReadableStreamDefaultReadValueResult | ReadableStreamDefaultReadDoneResult

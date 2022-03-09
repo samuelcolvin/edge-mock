@@ -54,7 +54,7 @@ describe('EdgeRequest', () => {
     const r2 = r1.clone()
     expect(r2.method).toEqual('POST')
     expect(await r2.text()).toEqual('test')
-    expect(r2.cf.colo).toEqual('ABC')
+    expect(r2.cf?.colo).toEqual('ABC')
   })
 
   test('get-body', async () => {

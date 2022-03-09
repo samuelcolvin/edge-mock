@@ -119,7 +119,7 @@ describe('EdgeFormData', () => {
     fd.append('a', '1')
     fd.append('b', '1')
 
-    function cb(this: any, value: FormDataEntryValue): void {
+    function cb(this: any, value: File | string): void {
       expect(value).toEqual('1')
       expect(this).toEqual('test-this')
     }

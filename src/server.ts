@@ -5,7 +5,7 @@ import fs from 'fs'
 import express, {Response as ExpressResponse} from 'express'
 import webpack from 'webpack'
 import livereload from 'livereload'
-import {makeEdgeEnv, EdgeKVNamespace, EdgeEnv} from './index'
+import {makeEdgeEnv, EdgeKVNamespace, EdgeEnv, EdgeFetchEvent} from './index'
 import live_fetch from './live_fetch'
 import {catArraysBufferViews, encode} from './utils'
 
@@ -252,7 +252,7 @@ function run_server(config: Config, env: EdgeEnv, webpack_state: WebpackState) {
     const {url, method, headers} = req
     const request = new Request(url, {method, headers: headers as Record<string, string>})
 
-    const event = new FetchEvent('fetch', {request})
+    const event = new EdgeFetchEvent('fetch', {request})
     event.respondWith = promise => {
       Promise.resolve(promise)
         .then(response => {

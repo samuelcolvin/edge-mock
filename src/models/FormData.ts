@@ -34,10 +34,14 @@ export class EdgeFormData implements FormData {
     this.map.set(name, [asFormDataEntryValue(value)])
   }
 
-  forEach(callbackfn: (value: FormDataEntryValue, key: string, parent: FormData) => void, thisArg?: any): void {
+  forEach<This = unknown>(
+    callback: (this: This, key: string, value: FormDataEntryValue, parent: FormData) => void,
+    thisArg?: This,
+  ): void {
     if (thisArg) {
-      callbackfn = callbackfn.bind(thisArg)
+      callback = callback.bind(thisArg)
     }
+    const callbackfn = callback as any
     for (const [key, array] of this.map) {
       for (const value of array) {
         callbackfn(value, key, this)
@@ -78,3 +82,5 @@ function asFormDataEntryValue(value: string | Blob | File): FormDataEntryValue {
     return new EdgeFile(parts, 'blob')
   }
 }
+
+export type FormDataEntryValue = File | string
