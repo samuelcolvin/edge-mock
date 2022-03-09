@@ -1,4 +1,4 @@
-import {makeEdgeEnv} from 'edge-mock'
+import {makeEdgeEnv, EdgeFetchEvent} from 'edge-mock'
 
 async function handleRequest(event: FetchEvent) {
   const {request, type} = event
@@ -21,7 +21,7 @@ describe('makeEdgeEnv', () => {
     })
     expect(typeof env.getListener()).toEqual('function')
     const request = new Request('/bar/', {method: 'POST', body: 'testing'})
-    const event = new FetchEvent('fetch', {request})
+    const event = new EdgeFetchEvent('fetch', {request})
     env.dispatchEvent(event)
     const response: Response = await (event as any)._response
     expect(response.status).toEqual(200)
@@ -42,7 +42,9 @@ describe('makeEdgeEnv', () => {
 
   test('wrong-event-type', async () => {
     makeEdgeEnv()
-    expect(() => addEventListener('foobar', null as any)).toThrow('only "fetch" events are supported, not "foobar"')
+    expect(() => addEventListener('foobar' as any, null as any)).toThrow(
+      'only "fetch" events are supported, not "foobar"',
+    )
   })
 
   test('clearEventListener', async () => {
@@ -58,7 +60,7 @@ describe('makeEdgeEnv', () => {
 
   test('dispatch-no-listener', async () => {
     const env = makeEdgeEnv()
-    const event = new FetchEvent('fetch', {request: new Request('/bar/')})
+    const event = new EdgeFetchEvent('fetch', {request: new Request('/bar/')})
     expect(() => env.dispatchEvent(event)).toThrow('no event listener added')
   })
 })

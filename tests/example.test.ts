@@ -1,4 +1,4 @@
-import {makeEdgeEnv} from 'edge-mock'
+import {makeEdgeEnv, EdgeFetchEvent} from 'edge-mock'
 import {handleRequest} from './example'
 
 describe('handleRequest', () => {
@@ -9,7 +9,7 @@ describe('handleRequest', () => {
 
   test('post', async () => {
     const request = new Request('/?foo=1', {method: 'POST', body: 'hello'})
-    const event = new FetchEvent('fetch', {request})
+    const event = new EdgeFetchEvent('fetch', {request})
     const response = await handleRequest(event)
     expect(response.status).toEqual(200)
     expect(await response.json()).toStrictEqual({

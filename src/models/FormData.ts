@@ -35,13 +35,8 @@ export class EdgeFormData implements FormData {
   }
 
   forEach<This = unknown>(
-    callback: (
-      this: This,
-      key: string,
-      value: FormDataEntryValue,
-      parent: FormData
-    ) => void,
-    thisArg?: This
+    callback: (this: This, key: string, value: FormDataEntryValue, parent: FormData) => void,
+    thisArg?: This,
   ): void {
     if (thisArg) {
       callback = callback.bind(thisArg)

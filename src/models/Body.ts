@@ -10,36 +10,36 @@ type BodyInitNotStream = Blob | BufferSource | FormData | URLSearchParams | stri
 
 export class EdgeBody implements Body {
   protected _formBoundary?: string
-  protected _stream: ReadableStream | null = null
+  protected _raw_content: BodyInit | null | undefined
 
-  constructor(content: BodyInit | null | undefined, formBoundary?: string) {
-    this._formBoundary = formBoundary
-    if (content) {
-      if (typeof content != 'string' && 'getReader' in content) {
-        this._stream = content
-      } else {
-        this._stream = new EdgeReadableStream({
-          start: async controller => {
-            const abv = await this._bodyToArrayBufferView(content)
-            controller.enqueue(abv as Uint8Array)
-          },
-        })
-      }
-    }
+  constructor(content: BodyInit | null | undefined) {
+    this._raw_content = content
   }
 
   get body(): ReadableStream | null {
-    return this._stream
+    if (!this._raw_content) {
+      return null
+    } else if (typeof this._raw_content != 'string' && 'getReader' in this._raw_content) {
+      return this._raw_content
+    } else {
+      // this will only be called once since this._raw_content is updated
+      return (this._raw_content = new EdgeReadableStream({
+        start: async controller => {
+          const abv = await bodyToArrayBufferView(this._raw_content as BodyInitNotStream, this._formBoundary)
+          controller.enqueue(abv as Uint8Array)
+        },
+      }))
+    }
   }
 
   get bodyUsed(): boolean {
-    return !!this._stream && this._stream.locked
+    return !!this.body && this.body.locked
   }
 
   async arrayBuffer(): Promise<ArrayBuffer> {
     this._check_used('arrayBuffer')
-    if (this._stream) {
-      const view = await rsToArrayBufferView(this._stream)
+    if (this.body) {
+      const view = await rsToArrayBufferView(this.body)
       return view.buffer
     } else {
       return new ArrayBuffer(0)
@@ -49,8 +49,8 @@ export class EdgeBody implements Body {
   async blob(): Promise<Blob> {
     this._check_used('blob')
     let parts: ArrayBufferView[] = []
-    if (this._stream) {
-      parts = [await rsToArrayBufferView(this._stream)]
+    if (this.body) {
+      parts = [await rsToArrayBufferView(this.body)]
     }
     return new EdgeBlob(parts)
   }
@@ -74,36 +74,36 @@ export class EdgeBody implements Body {
   }
 
   protected async _text(): Promise<string> {
-    if (this._stream) {
-      return await rsToString(this._stream)
+    if (this.body) {
+      return await rsToString(this.body)
     } else {
       return ''
     }
   }
 
   protected _check_used(name: string): void {
-    if (this._stream?.locked) {
+    if (this.body?.locked) {
       throw new Error(`Failed to execute "${name}": body is already used`)
     }
   }
+}
 
-  protected async _bodyToArrayBufferView(body: BodyInitNotStream): Promise<ArrayBufferView> {
-    if (typeof body == 'string') {
-      return encode(body)
-    } else if ('buffer' in body) {
-      return body
-    } else if ('byteLength' in body) {
-      return new Uint8Array(body)
-    } else if ('arrayBuffer' in body) {
-      return new Uint8Array(await body.arrayBuffer())
-    } else if (body instanceof URLSearchParams) {
-      return encode(body.toString())
-    } else if (body instanceof EdgeFormData) {
-      const [_, form_body] = await formDataAsString(body, this._formBoundary)
-      return encode(form_body)
-    } else {
-      throw new TypeError(`${getType(body)}s are not supported as body types`)
-    }
+async function bodyToArrayBufferView(body: BodyInitNotStream, boundary?: string): Promise<ArrayBufferView> {
+  if (typeof body == 'string') {
+    return encode(body)
+  } else if ('buffer' in body) {
+    return body
+  } else if ('byteLength' in body) {
+    return new Uint8Array(body)
+  } else if ('arrayBuffer' in body) {
+    return new Uint8Array(await body.arrayBuffer())
+  } else if (body instanceof URLSearchParams) {
+    return encode(body.toString())
+  } else if (body instanceof EdgeFormData) {
+    const [_, form_body] = await formDataAsString(body, boundary)
+    return encode(form_body)
+  } else {
+    throw new TypeError(`${getType(body)}s are not supported as body types`)
   }
 }
 

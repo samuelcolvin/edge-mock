@@ -60,9 +60,9 @@ export class EdgeRequest extends EdgeBody implements Request {
       throw new TypeError('Request with GET/HEAD method cannot have body.')
     }
 
+    super(init?.body)
     const headers = asHeaders(init?.headers, DEFAULT_HEADERS)
-    const boundary = findBoundary(headers, init?.body)
-    super(init?.body, boundary)
+    this._formBoundary = findBoundary(headers, init?.body)
     this.headers = headers
     this.url = 'https://example.com' + url
     this.method = method

@@ -10,14 +10,13 @@ export class EdgeResponse extends EdgeBody implements Response {
   readonly statusText: string
   readonly headers: Headers
   readonly redirected = false
-  // readonly type: ResponseType = 'default'
   readonly url: string
   readonly _extra?: any
 
   constructor(body?: BodyInit | null, init: ResponseInit = {}, url = 'https://example.com', extra?: any) {
+    super(body)
     const headers = asHeaders(init.headers)
-    const boundary = findBoundary(headers, body)
-    super(body, boundary)
+    this._formBoundary = findBoundary(headers, body)
     if (typeof body == 'string' && !headers.has('content-type')) {
       headers.set('content-type', 'text/plain')
     }
@@ -43,11 +42,11 @@ export class EdgeResponse extends EdgeBody implements Response {
     const init = {status: this.status, statusText: this.statusText, headers: this.headers}
     if (!this.body) {
       return new EdgeResponse(null, init)
-    } else if (this._stream?.locked) {
+    } else if (this.body?.locked) {
       throw new TypeError('Response body is already used')
     } else {
       const [s1, s2] = this.body.tee()
-      this._stream = s1
+      this._raw_content = s1
       return new EdgeResponse(s2, init)
     }
   }
