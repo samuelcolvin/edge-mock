@@ -27,10 +27,6 @@ export class EdgeFetchEvent implements FetchEvent {
     return undefined as any
   }
   /* istanbul ignore next */
-  get resultingClientId(): string {
-    return undefined as any
-  }
-  /* istanbul ignore next */
   get bubbles(): boolean {
     return undefined as any
   }
@@ -47,7 +43,7 @@ export class EdgeFetchEvent implements FetchEvent {
     return undefined as any
   }
   /* istanbul ignore next */
-  get currentTarget(): EventTarget | null {
+  get currentTarget(): EventTarget {
     return undefined as any
   }
   /* istanbul ignore next */
@@ -63,7 +59,7 @@ export class EdgeFetchEvent implements FetchEvent {
     return undefined as any
   }
   /* istanbul ignore next */
-  get srcElement(): EventTarget | null {
+  get srcElement(): EventTarget {
     return undefined as any
   }
   /* istanbul ignore next */
@@ -95,10 +91,6 @@ export class EdgeFetchEvent implements FetchEvent {
     return undefined as any
   }
   /* istanbul ignore next */
-  get preloadResponse(): Promise<any> {
-    return undefined as any
-  }
-  /* istanbul ignore next */
   get initEvent(): (_type: string, _bubbles?: boolean, _cancelable?: boolean) => void {
     return undefined as any
   }
@@ -122,4 +114,8 @@ export class EdgeFetchEvent implements FetchEvent {
   get stopPropagation(): () => void {
     return undefined as any
   }
+}
+
+interface FetchEventInit {
+  request: Request
 }

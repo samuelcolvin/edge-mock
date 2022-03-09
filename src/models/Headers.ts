@@ -53,6 +53,10 @@ export class EdgeHeaders implements Headers {
     return this.map.get(k) || null
   }
 
+  getAll(name: string): string[] {
+    throw Error('getAll is not implemented')
+  }
+
   has(name: string): boolean {
     return this.map.has(name.toLowerCase())
   }

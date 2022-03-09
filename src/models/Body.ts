@@ -5,11 +5,12 @@ import {EdgeReadableStream} from './ReadableStream'
 import {EdgeFormData} from './FormData'
 
 // type BodyInit = Blob | BufferSource | FormData | URLSearchParams | ReadableStream<Uint8Array> | string;
+type BufferSource = ArrayBufferView | ArrayBuffer
 type BodyInitNotStream = Blob | BufferSource | FormData | URLSearchParams | string
 
 export class EdgeBody implements Body {
   protected _formBoundary?: string
-  protected _stream: ReadableStream<Uint8Array> | null = null
+  protected _stream: ReadableStream | null = null
 
   constructor(content: BodyInit | null | undefined, formBoundary?: string) {
     this._formBoundary = formBoundary

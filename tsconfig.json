@@ -2,8 +2,8 @@
   "compilerOptions": {
     "outDir": ".",
     "module": "commonjs",
-    "target": "esnext",
-    "lib": ["esnext"],
+    "target": "ES2020",
+    "lib": ["ES2020"],
     "alwaysStrict": true,
     "strict": true,
     "preserveConstEnums": true,

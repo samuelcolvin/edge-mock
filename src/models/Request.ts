@@ -13,21 +13,31 @@ export type Method = typeof MethodStrings[number]
 export class EdgeRequest extends EdgeBody implements Request {
   readonly url: string
   readonly method: Method
-  readonly mode: RequestMode
-  readonly credentials: RequestCredentials
-  readonly cache: RequestCache
-  readonly redirect: 'follow' | 'error' | 'manual'
-  readonly referrer: string
-  readonly integrity: string
   readonly headers: Headers
-  readonly cf: IncomingRequestCfProperties
-  readonly destination: RequestDestination = ''
-  readonly isHistoryNavigation = false
-  readonly isReloadNavigation = false
-  readonly keepalive = false
-  readonly referrerPolicy: ReferrerPolicy = ''
+  readonly redirect: string
 
-  constructor(input: RequestInfo, init?: RequestInit) {
+  get fetcher(): Fetcher | null {
+    throw new Error('fetcher not yet implemented')
+  }
+
+  get signal(): AbortSignal {
+    throw new Error('signal not yet implemented')
+  }
+
+  readonly cf: IncomingRequestCfProperties
+  // rest are not implemented in CF
+  // readonly mode: RequestMode
+  // readonly credentials: RequestCredentials
+  // readonly cache: RequestCache
+  // readonly referrer: string
+  // readonly integrity: string
+  // readonly destination: RequestDestination = ''
+  // readonly isHistoryNavigation = false
+  // readonly isReloadNavigation = false
+  // readonly keepalive = false
+  // readonly referrerPolicy: ReferrerPolicy = ''
+
+  constructor(input: Request | string, init?: RequestInit) {
     let url: string
     if (typeof input == 'string') {
       url = input || '/'
@@ -35,11 +45,11 @@ export class EdgeRequest extends EdgeBody implements Request {
       url = input.url
       init = {
         body: input.body,
-        credentials: input.credentials,
+        // credentials: input.credentials,
         headers: input.headers,
         method: input.method,
-        mode: input.mode,
-        referrer: input.referrer,
+        // mode: input.mode,
+        // referrer: input.referrer,
         cf: input.cf,
         ...init,
       }
@@ -56,18 +66,14 @@ export class EdgeRequest extends EdgeBody implements Request {
     this.headers = headers
     this.url = 'https://example.com' + url
     this.method = method
-    this.mode = init?.mode || 'same-origin'
-    this.cache = init?.cache || 'default'
-    this.referrer = init?.referrer && init?.referrer !== 'no-referrer' ? init?.referrer : ''
-    // See https://fetch.spec.whatwg.org/#concept-request-credentials-mode
-    this.credentials = init?.credentials || (this.mode === 'navigate' ? 'include' : 'omit')
+    // this.mode = init?.mode || 'same-origin'
+    // this.cache = init?.cache || 'default'
+    // this.referrer = init?.referrer && init?.referrer !== 'no-referrer' ? init?.referrer : ''
+    // // See https://fetch.spec.whatwg.org/#concept-request-credentials-mode
+    // this.credentials = init?.credentials || (this.mode === 'navigate' ? 'include' : 'omit')
     this.redirect = init?.redirect || 'follow'
-    this.integrity = init?.integrity || '-'
+    // this.integrity = init?.integrity || '-'
     this.cf = example_cf(init?.cf as any)
-  }
-
-  get signal(): AbortSignal {
-    throw new Error('signal not yet implemented')
   }
 
   clone(): Request {
@@ -77,12 +83,12 @@ export class EdgeRequest extends EdgeBody implements Request {
       method: this.method,
       headers: this.headers,
       body: this.body,
-      mode: this.mode,
-      credentials: this.credentials,
-      cache: this.cache,
+      // mode: this.mode,
+      // credentials: this.credentials,
+      // cache: this.cache,
       redirect: this.redirect,
-      referrer: this.referrer,
-      integrity: this.integrity,
+      // referrer: this.referrer,
+      // integrity: this.integrity,
       cf: this.cf,
     })
   }

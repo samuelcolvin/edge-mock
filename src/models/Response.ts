@@ -10,7 +10,7 @@ export class EdgeResponse extends EdgeBody implements Response {
   readonly statusText: string
   readonly headers: Headers
   readonly redirected = false
-  readonly type: ResponseType = 'default'
+  // readonly type: ResponseType = 'default'
   readonly url: string
   readonly _extra?: any
 
@@ -33,6 +33,10 @@ export class EdgeResponse extends EdgeBody implements Response {
 
   get trailer(): Promise<Headers> {
     throw new Error('trailer not yet implemented')
+  }
+
+  get webSocket(): WebSocket | null {
+    throw new Error('webSocket not yet implemented')
   }
 
   clone(): Response {

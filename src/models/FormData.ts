@@ -88,4 +88,4 @@ function asFormDataEntryValue(value: string | Blob | File): FormDataEntryValue {
   }
 }
 
-type FormDataEntryValue = File | string
+export type FormDataEntryValue = File | string
