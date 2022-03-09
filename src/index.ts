@@ -66,7 +66,6 @@ export class EdgeEnv {
 const mock_types = {
   Request: EdgeRequest,
   Response: EdgeResponse,
-  FetchEvent: EdgeFetchEvent,
   Headers: EdgeHeaders,
   Blob: EdgeBlob,
   File: EdgeFile,
@@ -79,4 +78,8 @@ export function makeEdgeEnv(extra: Record<string, any> = {}): EdgeEnv {
   const env = new EdgeEnv()
   Object.assign(global, mock_types, {addEventListener: env.addEventListener}, extra)
   return env
+}
+
+export function as_event(request: Request): FetchEvent {
+  return new EdgeFetchEvent('fetch', {request})
 }
