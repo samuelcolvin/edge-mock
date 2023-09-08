@@ -1,4 +1,5 @@
 import {EdgeFile, EdgeFormData} from './models'
+import {FormDataEntryValue} from './models/FormData'
 
 export function stringAsFormData(boundary: string, body: string): FormData {
   let start = body.indexOf(`${boundary}\r\n`)

@@ -18,17 +18,6 @@ interface InternalValue {
   expiration?: number
 }
 
-interface OutputValue {
-  value: any
-  metadata: unknown | null
-}
-
-interface ListValue {
-  name: string
-  expiration?: number
-  metadata?: unknown
-}
-
 type ValueTypeNames = 'text' | 'json' | 'arrayBuffer' | 'stream'
 
 export class EdgeKVNamespace implements KVNamespace {
@@ -47,12 +36,12 @@ export class EdgeKVNamespace implements KVNamespace {
     return v.value || null
   }
 
-  async getWithMetadata(key: string, type?: ValueTypeNames): Promise<OutputValue> {
+  async getWithMetadata(key: string, options?: any): Promise<any> {
     const v = this.kv.get(key)
     if (v == undefined) {
       return {value: null, metadata: null}
     }
-    return {value: prepare_value(v.value, type), metadata: v.metadata || {}}
+    return {value: prepare_value(v.value, options), metadata: v.metadata || {}}
   }
 
   async put(key: string, value: InputValueValue, {metadata}: {metadata?: Record<string, string>} = {}): Promise<void> {
@@ -74,11 +63,7 @@ export class EdgeKVNamespace implements KVNamespace {
     this.kv.delete(key)
   }
 
-  async list(options?: {prefix?: string; limit?: number; cursor?: string}): Promise<{
-    keys: ListValue[]
-    list_complete: boolean
-    cursor?: string
-  }> {
+  async list<Metadata = unknown>(options?: KVNamespaceListOptions): Promise<KVNamespaceListResult<Metadata>> {
     options = options || {}
     if (options.cursor) {
       throw new Error('list cursors not yet implemented')
@@ -86,7 +71,7 @@ export class EdgeKVNamespace implements KVNamespace {
 
     const prefix = options.prefix
     const limit = options.limit || 1000
-    const keys: ListValue[] = []
+    const keys: KVNamespaceListKey<Metadata>[] = []
     for (const [name, value] of this.kv) {
       if (!prefix || name.startsWith(prefix)) {
         if (keys.length == limit) {
@@ -94,12 +79,12 @@ export class EdgeKVNamespace implements KVNamespace {
         }
         // const {expiration, metadata} = value
         const {metadata} = value
-        const list_value: ListValue = {name}
+        const list_value: KVNamespaceListKey<Metadata> = {name}
         // if (expiration != undefined) {
         //   list_value.expiration = expiration
         // }
         if (metadata != undefined) {
-          list_value.metadata = metadata
+          list_value.metadata = metadata as Metadata
         }
         keys.push(list_value)
       }

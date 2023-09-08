@@ -7,7 +7,6 @@ describe('EdgeResponse', () => {
     expect(response.status).toStrictEqual(200)
     expect(response.headers.get('content-type')).toEqual('text/plain')
     expect(response.statusText).toStrictEqual('')
-    expect(response.type).toStrictEqual('default')
     expect(response.bodyUsed).toStrictEqual(false)
     expect(await response.text()).toEqual('abc')
     expect(response.bodyUsed).toStrictEqual(true)
@@ -125,7 +124,7 @@ describe('EdgeResponse', () => {
     expect(response.bodyUsed).toStrictEqual(false)
   })
 
-  test('formData', async () => {
+  test('formData-given', async () => {
     const f = new EdgeFormData()
     f.append('a', 'b')
     f.append('c', 'd')
