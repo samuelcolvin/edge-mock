@@ -31,7 +31,7 @@ interface ListValue {
 
 type ValueTypeNames = 'text' | 'json' | 'arrayBuffer' | 'stream'
 
-export class EdgeKVNamespace implements KVNamespace {
+export class KvNamespace implements KVNamespace {
   protected kv: Map<string, InternalValue>
 
   constructor() {
